@@ -1,0 +1,25 @@
+Put licensed Free Fire MAX artwork here (key art, character art, map
+imagery).
+
+The FF MAX game card currently uses an ORIGINAL cinematic scene drawn in
+SVG inside index.html — a burning skyline with lit windows, a glider
+dropping into the city, a rim-lit operator silhouette, drifting embers
+and an angular HUD. It is built to read as a Free Fire MAX tournament
+card without using any game IP, because real FF MAX key art is licensed
+and must not be scraped.
+
+To swap in licensed art once you have it:
+
+  1. Drop the image here, e.g. assets/ffmax/key-art.jpg
+  2. In css/style.css, set the card's art variable:
+
+       .game-card--ffmax {
+         --card-art: url("../assets/ffmax/key-art.jpg");
+         --card-art-opacity: 0.6;   /* optional, defaults to 0.5 */
+       }
+
+The image renders in .game-card__photo, which sits ABOVE the background
+atmosphere and BELOW the readability gradient — so the white card text
+stays legible on top of it. You can keep or remove the SVG scene: to
+remove it, delete the <svg class="game-card__art"> block from the FF MAX
+card in index.html.
