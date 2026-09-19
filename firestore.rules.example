@@ -1,0 +1,40 @@
+// EXAMPLE ONLY — apply separately in BOTH the BGMI and FF MAX
+// Firebase projects (Firestore -> Rules).
+//
+// The public homepage READS tournament data through realtime
+// onSnapshot listeners. Realtime listeners need exactly the same
+// permission as a one-off read — "allow read" already covers both
+// get and list, so nothing here has to be weakened to make live
+// updates work.
+//
+// The public site NEVER writes. Tournament status changes
+// (registration_open -> live -> completed) come from the admin
+// panel, which must authenticate first — see the admin block below.
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /tournaments/{tournamentId} {
+      // Public, read-only tournament information.
+      allow read: if true;
+
+      // Writes only from a signed-in admin. Replace this with your
+      // real admin check once the admin panel exists — either a
+      // custom claim:
+      //     allow write: if request.auth.token.admin == true;
+      // or an admins collection:
+      //     allow write: if exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      // Until then it stays closed and status is changed by hand in
+      // the Firebase Console.
+      allow write: if false;
+    }
+
+    // Everything else (registrations, teams, players, payments,
+    // admins, settings) stays fully locked until those features
+    // are built with proper Firebase Auth checks.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

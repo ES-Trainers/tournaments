@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ES Trainers | Esports Tournaments for BGMI & FF MAX</title>
+<meta name="description" content="ES Trainers organizes competitive BGMI and FF MAX tournaments — discover upcoming events, register your team, and follow results.">
+<link rel="canonical" href="https://estrainers.in/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ES Trainers">
+<meta property="og:title" content="ES Trainers | Esports Tournaments for BGMI & FF MAX">
+<meta property="og:description" content="Your arena for competitive gaming. Discover BGMI and FF MAX tournaments, register your team, and follow results.">
+<meta property="og:url" content="https://estrainers.in/">
+<meta property="og:image" content="https://estrainers.in/assets/logo/logo.png">
+
+<!-- Twitter/X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ES Trainers | Esports Tournaments for BGMI & FF MAX">
+<meta name="twitter:description" content="Your arena for competitive gaming. Discover BGMI and FF MAX tournaments, register your team, and follow results.">
+
+<!-- Favicon: generated from the official ES Trainers logo -->
+<link rel="icon" type="image/png" sizes="32x32" href="assets/logo/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/logo/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/responsive.css">
+<link rel="stylesheet" href="css/animations.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ==========================================================
+     NAVBAR
+     ========================================================== -->
+<header class="nav" id="site-nav">
+  <div class="container nav__inner">
+    <a href="/" class="brand" aria-label="ES Trainers home">
+      <img src="assets/logo/logo.png" alt="" class="brand__mark" width="34" height="34">
+      <span class="brand__name">ES Trainers</span>
+    </a>
+
+    <nav class="nav__links" aria-label="Primary">
+      <a href="/">Home</a>
+      <a href="/bgmi/">BGMI</a>
+      <a href="/ff-max/">FF MAX</a>
+      <a href="/about/">About</a>
+      <a href="/contact/">Contact</a>
+    </nav>
+
+    <div class="nav__actions">
+      <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" class="btn btn--primary">
+        Join Community
+      </a>
+      <button class="nav__toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile menu -->
+<div class="mobile-menu" id="mobile-menu">
+  <div class="mobile-menu__panel">
+    <nav class="mobile-menu__links" aria-label="Mobile primary">
+      <a href="/">Home</a>
+      <a href="/bgmi/">BGMI</a>
+      <a href="/ff-max/">FF MAX</a>
+      <a href="/about/">About</a>
+      <a href="/contact/">Contact</a>
+    </nav>
+    <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" class="btn btn--primary">
+      Join Community
+    </a>
+  </div>
+</div>
+
+<main id="main">
+
+  <!-- ==========================================================
+       HERO
+       ========================================================== -->
+  <section class="hero">
+    <!-- Layered cinematic background: grid, light streaks, drifting particles -->
+    <svg class="hero__bg-grid" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <pattern id="grid" width="46" height="46" patternUnits="userSpaceOnUse">
+          <path d="M46 0H0V46" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        </pattern>
+        <radialGradient id="gridFade" cx="72%" cy="30%" r="65%">
+          <stop offset="0%" stop-color="#fff" stop-opacity="1"/>
+          <stop offset="70%" stop-color="#fff" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+        <mask id="gridMask">
+          <rect width="800" height="600" fill="url(#gridFade)"/>
+        </mask>
+      </defs>
+      <rect width="800" height="600" fill="url(#grid)" mask="url(#gridMask)"/>
+    </svg>
+
+    <!-- Fine technical framing lines + corner ticks -->
+    <svg class="hero__technical" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <circle cx="900" cy="260" r="260" fill="none" stroke="rgba(90,141,255,0.14)" stroke-width="1"/>
+      <circle cx="900" cy="260" r="330" fill="none" stroke="rgba(90,141,255,0.08)" stroke-width="1" stroke-dasharray="2 10"/>
+      <path d="M70 40v34M70 40h34" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+      <path d="M1130 660v-34M1130 660h-34" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+    </svg>
+
+    <svg class="hero__streaks" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="streakGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#5A8DFF" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#5A8DFF" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#5A8DFF" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <line class="hero__streak" x1="-100" y1="120" x2="700" y2="-80" stroke="url(#streakGrad)" stroke-width="2"/>
+      <line class="hero__streak hero__streak--2" x1="200" y1="760" x2="1300" y2="120" stroke="url(#streakGrad)" stroke-width="1.5"/>
+      <line class="hero__streak hero__streak--3" x1="900" y1="800" x2="1400" y2="200" stroke="url(#streakGrad)" stroke-width="1"/>
+    </svg>
+
+    <svg class="hero__particles" viewBox="0 0 480 480" aria-hidden="true">
+      <circle class="hero__particle" cx="70" cy="120" r="2.4"/>
+      <circle class="hero__particle hero__particle--b" cx="410" cy="90" r="1.8"/>
+      <circle class="hero__particle hero__particle--c" cx="60" cy="340" r="2"/>
+      <circle class="hero__particle" cx="430" cy="300" r="1.6"/>
+      <circle class="hero__particle hero__particle--b" cx="240" cy="60" r="1.8"/>
+      <circle class="hero__particle hero__particle--c" cx="380" cy="420" r="2.2"/>
+      <circle class="hero__particle" cx="130" cy="440" r="1.6"/>
+    </svg>
+
+    <div class="container hero__grid">
+      <div class="hero__copy">
+        <p class="hero__eyebrow">Competitive Gaming, Organized</p>
+        <h1>ES TRAINERS</h1>
+        <p class="hero__tagline">Play · Improve · Compete · Win</p>
+        <p class="hero__desc">
+          ES Trainers organizes competitive tournaments for BGMI and FF MAX —
+          built for players who want structured competition, clear rules,
+          and a straightforward path from registration to results.
+        </p>
+        <div class="hero__actions btn-row">
+          <a href="/bgmi/" class="btn btn--primary">Explore BGMI</a>
+          <a href="/ff-max/" class="btn btn--on-dark">Explore FF MAX</a>
+        </div>
+      </div>
+
+      <div class="hero__visual" aria-hidden="true">
+        <svg class="hero__rings" viewBox="0 0 480 480" width="100%" height="100%">
+          <defs>
+            <radialGradient id="orbBlue" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#5A8DFF" stop-opacity="0.8"/>
+              <stop offset="100%" stop-color="#5A8DFF" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#5A8DFF"/>
+              <stop offset="100%" stop-color="#1652F0"/>
+            </linearGradient>
+          </defs>
+          <circle class="hero__orb" cx="260" cy="210" r="160" fill="url(#orbBlue)"/>
+          <circle class="hero__orb hero__orb--slow" cx="150" cy="330" r="90" fill="url(#orbBlue)" opacity="0.55"/>
+          <g transform="translate(240,240)">
+            <circle r="190" fill="none" stroke="url(#ringGrad)" stroke-width="1" opacity="0.3"/>
+            <circle r="150" fill="none" stroke="url(#ringGrad)" stroke-width="1.5" opacity="0.45"/>
+            <g class="hero__ring-spin">
+              <circle r="215" fill="none" stroke="url(#ringGrad)" stroke-width="1" stroke-dasharray="1 14" opacity="0.55"/>
+              <circle cx="215" cy="0" r="3.2" fill="#9db8ff"/>
+            </g>
+            <g class="hero__ring-spin hero__ring-spin--rev">
+              <circle r="235" fill="none" stroke="url(#ringGrad)" stroke-width="1" stroke-dasharray="3 3 3 40" opacity="0.35"/>
+              <circle cx="-235" cy="0" r="2.4" fill="#5a8dff"/>
+            </g>
+          </g>
+        </svg>
+
+        <!-- Real ES Trainers logo, centered with a soft glow -->
+        <div class="hero__logo-wrap">
+          <img src="assets/logo/logo.png" alt="ES Trainers" class="hero__logo">
+        </div>
+
+        <span class="hero__chip hero__chip--1" aria-hidden="true"></span>
+        <span class="hero__chip hero__chip--2" aria-hidden="true"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       GAME SELECTION
+       ========================================================== -->
+  <section class="games" id="games">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <h2>Choose your game</h2>
+        <p>Two dedicated tournament tracks, each with its own rules, prize structure and history.</p>
+      </div>
+
+      <!--
+        GAME CARDS — original cinematic key-art built in SVG.
+        No licensed BGMI / Free Fire MAX assets have been supplied, and game
+        character art is licensed IP that must not be scraped, so each card is
+        an ORIGINAL scene composed to read unmistakably as that game's
+        tournament: a night battle-royale drop for BGMI (transport plane,
+        parachutes, ridgelines, a rim-lit trooper silhouette, tactical HUD),
+        and an urban firefight for FF MAX (burning skyline, lit windows,
+        glider drop, a lunging rim-lit operator, ember drift).
+
+        Layer order in both cards:
+        atmosphere -> optional licensed photo -> SVG scene -> readability
+        gradient -> text -> CTA.
+
+        To drop in licensed key art later, set --card-art on the card (see
+        .game-card__photo in css/style.css and assets/bgmi/PLACE_ASSETS_HERE.txt);
+        it layers UNDER the readability gradient so the text stays legible.
+      -->
+      <div class="games__grid">
+        <a href="/bgmi/" class="game-card game-card--bgmi" data-reveal data-tilt>
+          <div class="game-card__atmosphere" aria-hidden="true"></div>
+          <div class="game-card__photo" aria-hidden="true"></div>
+
+          <svg class="game-card__art" viewBox="0 0 480 480" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs>
+              <linearGradient id="bgmiSky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0f3329"/>
+                <stop offset="45%" stop-color="#071c17"/>
+                <stop offset="100%" stop-color="#030c0a"/>
+              </linearGradient>
+              <radialGradient id="bgmiHaze" cx="70%" cy="26%" r="56%">
+                <stop offset="0%" stop-color="#4fe0b8" stop-opacity="0.26"/>
+                <stop offset="100%" stop-color="#4fe0b8" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="bgmiKeyLight" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#4fe0b8" stop-opacity="0.34"/>
+                <stop offset="100%" stop-color="#4fe0b8" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="bgmiDust" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#3fd6ae" stop-opacity="0.16"/>
+                <stop offset="100%" stop-color="#3fd6ae" stop-opacity="0"/>
+              </linearGradient>
+              <pattern id="bgmiScan" width="4" height="4" patternUnits="userSpaceOnUse">
+                <rect width="4" height="1" fill="rgba(143,245,218,0.06)"/>
+              </pattern>
+              <radialGradient id="bgmiVignette" cx="54%" cy="34%" r="76%">
+                <stop offset="50%" stop-color="#000" stop-opacity="0"/>
+                <stop offset="100%" stop-color="#000" stop-opacity="0.7"/>
+              </radialGradient>
+
+              <!-- Trooper silhouette: drawn once, used twice — an accent
+                   copy offset behind the black copy gives the rim light. -->
+              <g id="bgmiTrooper">
+                <rect x="-31" y="-166" width="21" height="48" rx="7"/>
+                <path d="M-15 -186a15 14 0 0 1 30 0l4 6h-38z"/>
+                <rect x="-7" y="-177" width="16" height="13" rx="3"/>
+                <path d="M-1 -170 3 -118" fill="none" stroke-width="31" stroke-linecap="round"/>
+                <path d="M0 -120-11 -68-15 -8" fill="none" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5 -120 17 -70 25 -10" fill="none" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M-24 -6h16" fill="none" stroke-width="10" stroke-linecap="round"/>
+                <path d="M18 -8h18" fill="none" stroke-width="10" stroke-linecap="round"/>
+                <path d="M2 -158 22 -140" fill="none" stroke-width="11" stroke-linecap="round"/>
+                <path d="M16 -152 64 -150" fill="none" stroke-width="8"/>
+                <path d="M26 -150 18 -130" fill="none" stroke-width="8" stroke-linecap="round"/>
+                <path d="M4 -154 18 -160" fill="none" stroke-width="10" stroke-linecap="round"/>
+                <path d="M6 -158 38 -146" fill="none" stroke-width="11" stroke-linecap="round"/>
+              </g>
+              <g id="bgmiChute">
+                <path d="M-20 0a20 17 0 0 1 40 0z"/>
+                <path d="M-20 0-3 15M-7 0-1.5 15M7 0 1.5 15M20 0 3 15" fill="none" stroke-width="1.3"/>
+                <rect x="-3.5" y="15" width="7" height="10" rx="3"/>
+              </g>
+              <g id="bgmiPlane">
+                <path d="M0 0 46-3 53 0 46 3z"/>
+                <path d="M17-1 26-15h6l-4 14z"/>
+                <path d="M17 1 26 15h6l-4-14z"/>
+                <path d="M1-2 9-10h5l-4 8z"/>
+              </g>
+            </defs>
+
+            <rect width="480" height="480" fill="url(#bgmiSky)"/>
+            <rect width="480" height="480" fill="url(#bgmiHaze)"/>
+
+            <!-- transport plane on its drop run, chutes trailing behind -->
+            <path class="game-card__dropline" d="M56 74 264 142" stroke="#5fe9c8" stroke-width="1.2" stroke-dasharray="4 9" fill="none" opacity="0.4"/>
+            <g transform="translate(34,64) rotate(14) scale(0.72)" fill="#bfe9dd" opacity="0.5">
+              <use href="#bgmiPlane"/>
+            </g>
+            <g fill="#a9ecd9" stroke="#a9ecd9" opacity="0.55">
+              <use class="game-card__chute" href="#bgmiChute" transform="translate(104,126)"/>
+              <use class="game-card__chute" href="#bgmiChute" transform="translate(156,172) scale(0.7)"/>
+              <use class="game-card__chute" href="#bgmiChute" transform="translate(68,194) scale(0.52)"/>
+            </g>
+
+            <!-- layered night ridgelines: far, mid, near -->
+            <path d="M-20 206C22 188 46 160 78 170s44 28 74 8 52-30 88-24 60-30 92-18 56 34 88 22 54-16 80-6V480H-20z" fill="#0d3129" opacity="0.88"/>
+            <path d="M-20 260C32 244 60 212 98 222s56 38 94 26 62-32 100-22 54 36 94 26 68-18 94-10V480H-20z" fill="#082019"/>
+            <rect x="-20" y="252" width="520" height="150" fill="url(#bgmiDust)"/>
+            <path d="M-20 324C42 308 86 282 140 296s76 32 122 18 68-28 114-18 76 22 124 14V480H-20z" fill="#04110e"/>
+
+            <!-- rim-lit trooper holding the ridge -->
+            <ellipse cx="352" cy="224" rx="120" ry="130" fill="url(#bgmiKeyLight)"/>
+            <g transform="translate(352,314)">
+              <use href="#bgmiTrooper" transform="translate(-4,-4)" fill="#5fe9c8" stroke="#5fe9c8" opacity="0.6"/>
+              <use href="#bgmiTrooper" fill="#020a08" stroke="#020a08"/>
+            </g>
+
+            <!-- tactical HUD: bearing strip, target bracket, corner ticks -->
+            <g stroke="#8ff5da" fill="none" opacity="0.45">
+              <path d="M32 34h416" stroke-width="1"/>
+              <path d="M40 34v9M60 34v5M80 34v5M100 34v5M120 34v9M140 34v5M160 34v5M180 34v5M200 34v9M220 34v5M240 34v5M260 34v5M280 34v9M300 34v5M320 34v5M340 34v5M360 34v9M380 34v5M400 34v5M420 34v5M440 34v9" stroke-width="1.1"/>
+              <path d="M240 22 246 30h-12z" fill="#8ff5da" stroke="none" opacity="0.85"/>
+              <path d="M320 134h-14v14M392 134h14v14M320 212h-14v-14M392 212h14v-14" stroke-width="1.4"/>
+              <path d="M414 150h30M414 158h18" stroke-width="1" opacity="0.6"/>
+              <path d="M22 22h28M22 22v28M458 458h-28M458 458v-28" stroke-width="1.4" opacity="0.7"/>
+            </g>
+
+            <rect width="480" height="480" fill="url(#bgmiScan)"/>
+            <rect width="480" height="480" fill="url(#bgmiVignette)"/>
+          </svg>
+
+          <div class="game-card__overlay" aria-hidden="true"></div>
+
+          <div class="game-card__content">
+            <span class="game-card__badge">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-width="1.4"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              Battle Royale
+            </span>
+            <h3>BGMI</h3>
+            <p>Classic and custom squad tournaments across multiple maps.</p>
+            <span class="game-card__cta">
+              Explore BGMI
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </div>
+        </a>
+
+        <a href="/ff-max/" class="game-card game-card--ffmax" data-reveal data-tilt>
+          <div class="game-card__atmosphere" aria-hidden="true"></div>
+          <div class="game-card__photo" aria-hidden="true"></div>
+
+          <svg class="game-card__art" viewBox="0 0 480 480" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <defs>
+              <linearGradient id="ffmaxSky" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#3b1208"/>
+                <stop offset="42%" stop-color="#1a0703"/>
+                <stop offset="100%" stop-color="#090202"/>
+              </linearGradient>
+              <radialGradient id="ffmaxBurn" cx="30%" cy="58%" r="62%">
+                <stop offset="0%" stop-color="#ff8a4c" stop-opacity="0.42"/>
+                <stop offset="100%" stop-color="#ff8a4c" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="ffmaxKeyLight" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#ff8a4c" stop-opacity="0.36"/>
+                <stop offset="100%" stop-color="#ff8a4c" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="ffmaxSmoke" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0%" stop-color="#ff8a4c" stop-opacity="0.22"/>
+                <stop offset="100%" stop-color="#ff8a4c" stop-opacity="0"/>
+              </linearGradient>
+              <pattern id="ffmaxScan" width="4" height="4" patternUnits="userSpaceOnUse">
+                <rect width="4" height="1" fill="rgba(255,190,140,0.06)"/>
+              </pattern>
+              <radialGradient id="ffmaxVignette" cx="48%" cy="36%" r="76%">
+                <stop offset="50%" stop-color="#000" stop-opacity="0"/>
+                <stop offset="100%" stop-color="#000" stop-opacity="0.72"/>
+              </radialGradient>
+
+              <g id="ffmaxOperator">
+                <rect x="-42" y="-142" width="19" height="42" rx="6"/>
+                <path d="M-27 -152a14 13 0 0 1 27 0l4 6-34 1z"/>
+                <path d="M-19 -140 6 -104" fill="none" stroke-width="29" stroke-linecap="round"/>
+                <path d="M4 -104-16 -62-32 -10" fill="none" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8 -104 32 -76 24 -12" fill="none" stroke-width="13" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M-42 -8h18" fill="none" stroke-width="10" stroke-linecap="round"/>
+                <path d="M18 -10h18" fill="none" stroke-width="10" stroke-linecap="round"/>
+                <path d="M-17 -133 12 -119" fill="none" stroke-width="10" stroke-linecap="round"/>
+                <path d="M4 -128 52 -121" fill="none" stroke-width="8"/>
+                <path d="M18 -125 12 -106" fill="none" stroke-width="8" stroke-linecap="round"/>
+                <path d="M-13 -131 30 -123" fill="none" stroke-width="10" stroke-linecap="round"/>
+              </g>
+              <g id="ffmaxGlider">
+                <path d="M-26 0 0-11 26 0-2 8z"/>
+                <path d="M-6 6 0 20 6 6" fill="none" stroke-width="1.4"/>
+                <rect x="-4" y="19" width="8" height="11" rx="3"/>
+              </g>
+            </defs>
+
+            <rect width="480" height="480" fill="url(#ffmaxSky)"/>
+            <rect width="480" height="480" fill="url(#ffmaxBurn)"/>
+
+            <!-- glider dropping into the city -->
+            <path class="game-card__dropline" d="M42 66 148 128" stroke="#ffb37a" stroke-width="1.2" stroke-dasharray="4 9" fill="none" opacity="0.4"/>
+            <g transform="translate(150,132) scale(0.9)" fill="#ffc79a" stroke="#ffc79a" opacity="0.6">
+              <use class="game-card__chute" href="#ffmaxGlider"/>
+            </g>
+
+            <!-- burning skyline: lit far towers, blacked-out near blocks -->
+            <g fill="#25100a"><rect x="-10" y="200" width="60" height="100"/><rect x="54" y="232" width="38" height="68"/><rect x="96" y="188" width="52" height="112"/><rect x="152" y="222" width="34" height="78"/><rect x="190" y="170" width="64" height="130"/><rect x="258" y="214" width="40" height="86"/><rect x="302" y="196" width="58" height="104"/><rect x="364" y="226" width="36" height="74"/><rect x="404" y="182" width="46" height="118"/><rect x="454" y="210" width="40" height="90"/></g>
+            <g fill="#ffc189"><rect x="0" y="214" width="4" height="7" opacity="0.2"/><rect x="0" y="238" width="4" height="7" opacity="0.2"/><rect x="0" y="262" width="4" height="7" opacity="0.2"/><rect x="20" y="214" width="4" height="7" opacity="0.55"/><rect x="20" y="238" width="4" height="7" opacity="0.55"/><rect x="20" y="262" width="4" height="7" opacity="0.55"/><rect x="40" y="214" width="4" height="7" opacity="0.2"/><rect x="40" y="238" width="4" height="7" opacity="0.2"/><rect x="40" y="262" width="4" height="7" opacity="0.2"/><rect x="64" y="246" width="4" height="7" opacity="0.2"/><rect x="64" y="270" width="4" height="7" opacity="0.2"/><rect x="106" y="202" width="4" height="7" opacity="0.2"/><rect x="106" y="226" width="4" height="7" opacity="0.2"/><rect x="106" y="250" width="4" height="7" opacity="0.2"/><rect x="106" y="274" width="4" height="7" opacity="0.2"/><rect x="126" y="202" width="4" height="7" opacity="0.2"/><rect x="126" y="226" width="4" height="7" opacity="0.2"/><rect x="126" y="250" width="4" height="7" opacity="0.2"/><rect x="126" y="274" width="4" height="7" opacity="0.2"/><rect x="162" y="236" width="4" height="7" opacity="0.2"/><rect x="162" y="260" width="4" height="7" opacity="0.2"/><rect x="200" y="184" width="4" height="7" opacity="0.55"/><rect x="200" y="208" width="4" height="7" opacity="0.55"/><rect x="200" y="232" width="4" height="7" opacity="0.55"/><rect x="200" y="256" width="4" height="7" opacity="0.55"/><rect x="220" y="184" width="4" height="7" opacity="0.2"/><rect x="220" y="208" width="4" height="7" opacity="0.2"/><rect x="220" y="232" width="4" height="7" opacity="0.2"/><rect x="220" y="256" width="4" height="7" opacity="0.2"/><rect x="240" y="184" width="4" height="7" opacity="0.2"/><rect x="240" y="208" width="4" height="7" opacity="0.2"/><rect x="240" y="232" width="4" height="7" opacity="0.2"/><rect x="240" y="256" width="4" height="7" opacity="0.2"/><rect x="268" y="228" width="4" height="7" opacity="0.2"/><rect x="268" y="252" width="4" height="7" opacity="0.2"/><rect x="268" y="276" width="4" height="7" opacity="0.2"/><rect x="288" y="228" width="4" height="7" opacity="0.55"/><rect x="288" y="252" width="4" height="7" opacity="0.55"/><rect x="288" y="276" width="4" height="7" opacity="0.55"/><rect x="312" y="210" width="4" height="7" opacity="0.55"/><rect x="312" y="234" width="4" height="7" opacity="0.55"/><rect x="312" y="258" width="4" height="7" opacity="0.55"/><rect x="312" y="282" width="4" height="7" opacity="0.55"/><rect x="332" y="210" width="4" height="7" opacity="0.2"/><rect x="332" y="234" width="4" height="7" opacity="0.2"/><rect x="332" y="258" width="4" height="7" opacity="0.2"/><rect x="332" y="282" width="4" height="7" opacity="0.2"/><rect x="374" y="240" width="4" height="7" opacity="0.2"/><rect x="374" y="264" width="4" height="7" opacity="0.2"/><rect x="414" y="196" width="4" height="7" opacity="0.2"/><rect x="414" y="220" width="4" height="7" opacity="0.2"/><rect x="414" y="244" width="4" height="7" opacity="0.2"/><rect x="414" y="268" width="4" height="7" opacity="0.2"/><rect x="434" y="196" width="4" height="7" opacity="0.55"/><rect x="434" y="220" width="4" height="7" opacity="0.55"/><rect x="434" y="244" width="4" height="7" opacity="0.55"/><rect x="434" y="268" width="4" height="7" opacity="0.55"/><rect x="464" y="224" width="4" height="7" opacity="0.2"/><rect x="464" y="248" width="4" height="7" opacity="0.2"/><rect x="464" y="272" width="4" height="7" opacity="0.2"/><rect x="484" y="224" width="4" height="7" opacity="0.55"/><rect x="484" y="248" width="4" height="7" opacity="0.55"/><rect x="484" y="272" width="4" height="7" opacity="0.55"/></g>
+            <rect x="-20" y="170" width="520" height="140" fill="url(#ffmaxSmoke)"/>
+            <g fill="#0b0403"><rect x="-20" y="310" width="90" height="170"/><rect x="80" y="338" width="60" height="142"/><rect x="146" y="306" width="70" height="174"/><rect x="222" y="332" width="86" height="148"/><rect x="312" y="300" width="66" height="180"/><rect x="384" y="336" width="60" height="144"/><rect x="450" y="314" width="50" height="166"/></g>
+            <path d="M-20 330h520" stroke="rgba(255,138,76,0.3)" stroke-width="1.4" fill="none"/>
+
+            <!-- rim-lit operator pushing through the street -->
+            <ellipse cx="322" cy="250" rx="118" ry="122" fill="url(#ffmaxKeyLight)"/>
+            <g class="game-card__streaks" stroke="#ff8a4c" stroke-linecap="round" fill="none">
+              <path d="M392 236h84" stroke-width="2.4" opacity="0.4"/>
+              <path d="M406 262h80" stroke-width="1.8" opacity="0.3"/>
+              <path d="M398 288h64" stroke-width="1.4" opacity="0.22"/>
+            </g>
+            <g transform="translate(346,330) scale(-1,1)">
+              <use href="#ffmaxOperator" transform="translate(-4,-4)" fill="#ff9a5c" stroke="#ff9a5c" opacity="0.6"/>
+              <use href="#ffmaxOperator" fill="#0a0302" stroke="#0a0302"/>
+            </g>
+
+            <!-- embers rising off the street -->
+            <g fill="#ffb37a">
+              <circle class="game-card__ember" cx="150" cy="312" r="2.6" opacity="0.6"/>
+              <circle class="game-card__ember" cx="212" cy="346" r="2" opacity="0.5"/>
+              <circle class="game-card__ember" cx="96" cy="280" r="2.2" opacity="0.55"/>
+              <circle class="game-card__ember" cx="258" cy="268" r="1.8" opacity="0.5"/>
+            </g>
+
+            <!-- angular HUD: reticle, corner brackets, ammo ticks -->
+            <g stroke="#ffd08a" fill="none" opacity="0.45">
+              <path d="M112 186v-16m0 48v16m-24-24H72m64 0h16" stroke-width="1.4"/>
+              <path d="M98 196 112 182 126 196 112 210z" stroke-width="1.1" opacity="0.7"/>
+              <path d="M24 24h30M24 24v30M456 456h-30M456 456v-30" stroke-width="1.4" opacity="0.7"/>
+              <path d="M398 424v14M408 420v18M418 424v14M428 428v10" stroke-width="1.6" opacity="0.55"/>
+            </g>
+
+            <rect width="480" height="480" fill="url(#ffmaxScan)"/>
+            <rect width="480" height="480" fill="url(#ffmaxVignette)"/>
+          </svg>
+
+          <div class="game-card__overlay" aria-hidden="true"></div>
+
+          <div class="game-card__content">
+            <span class="game-card__badge">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 10-13h-6l0-7Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
+              Battle Royale
+            </span>
+            <h3>FF MAX</h3>
+            <p>Fast-paced squad tournaments built for Free Fire MAX.</p>
+            <span class="game-card__cta">
+              Explore FF MAX
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       UPCOMING TOURNAMENTS (Firebase-driven)
+       ========================================================== -->
+  <section class="section tournaments" id="tournaments">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <h2>Upcoming tournaments</h2>
+        <p>Live from the ES Trainers tournament database. Nothing here is placeholder data.</p>
+      </div>
+
+      <div class="tournaments__grid" id="tournaments-grid" aria-live="polite">
+        <!-- Populated by js/tournaments.js from two independent Firebase
+             projects via realtime onSnapshot listeners. This block is the
+             ONLY loading state on the page: it is removed once after the
+             first snapshot and never shown again, no matter how many
+             realtime updates arrive afterwards. -->
+        <div class="tempty" data-tournaments-loading>
+          <svg class="tempty__icon" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+            <rect x="6" y="10" width="36" height="28" rx="3" stroke="currentColor" stroke-width="2"/>
+            <path d="M6 18h36" stroke="currentColor" stroke-width="2"/>
+            <path d="M16 6v8M32 6v8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <p>Loading tournament information…</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ==========================================================
+       ES TRAINERS ON INSTAGRAM
+       Points players at the official Instagram account and mirrors
+       the current Firebase tournament state. There is no feed, no
+       iframe, no embed, no API call and no post data of any kind —
+       Instagram owns every post, reel, schedule and result.
+       The panel, handle and CTA exist in the markup from the start;
+       js/instagram.js only fills the status area and rewrites text,
+       so a realtime update never re-renders the section.
+       ========================================================== -->
+  <section class="section ig" id="instagram">
+    <div class="container">
+      <div class="ig__panel" data-reveal>
+        <span class="ig__rail" aria-hidden="true"></span>
+
+        <div class="ig__body">
+          <div class="ig__intro">
+            <span class="ig__eyebrow">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.2" y="3.2" width="17.6" height="17.6" rx="5.2" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4.1" stroke="currentColor" stroke-width="1.7"/><circle cx="17.1" cy="6.9" r="1.2" fill="currentColor"/></svg>
+              Instagram
+            </span>
+            <h2>ES Trainers on <span class="ig__grad">Instagram</span></h2>
+            <p>Tournament announcements, registration updates, match schedules, results and important updates — all on our official Instagram.</p>
+          </div>
+
+          <!-- Firebase-driven status area. Empty and hidden until a
+               live / registration-open / upcoming tournament exists. -->
+          <div class="ig__status" data-ig-status hidden>
+            <div class="ig__status-list" data-ig-status-list aria-live="polite"></div>
+          </div>
+
+          <div class="ig__action">
+            <a class="ig__handle" data-ig-profile href="https://www.instagram.com/es_trainers/" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.2" y="3.2" width="17.6" height="17.6" rx="5.2" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4.1" stroke="currentColor" stroke-width="1.7"/><circle cx="17.1" cy="6.9" r="1.2" fill="currentColor"/></svg>
+              <span data-ig-handle>@es_trainers</span>
+            </a>
+            <a class="btn btn--instagram" data-ig-profile href="https://www.instagram.com/es_trainers/" target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.2" y="3.2" width="17.6" height="17.6" rx="5.2" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4.1" stroke="currentColor" stroke-width="1.7"/><circle cx="17.1" cy="6.9" r="1.2" fill="currentColor"/></svg>
+              <span data-ig-cta>Follow us on Instagram</span>
+            </a>
+          </div>
+
+          <p class="ig__note">Every post, reel and announcement is published on Instagram. The tournament status shown here updates on its own — no refresh needed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       WHY ES TRAINERS
+       ========================================================== -->
+  <section class="section features" id="about">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <h2>Why ES Trainers</h2>
+        <p>A tournament platform built around structure and transparency, not hype.</p>
+      </div>
+
+      <div class="features__grid">
+        <div class="feature" data-reveal>
+          <div class="feature__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M7 4h10v4a5 5 0 0 1-5 5 5 5 0 0 1-5-5V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 13v3m-3 4h6m-3-4v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Competitive tournaments</h3>
+          <p>Structured brackets and rules for BGMI and FF MAX squads.</p>
+        </div>
+        <div class="feature" data-reveal>
+          <div class="feature__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3 5 6v5c0 4.2 2.9 7.9 7 9 4.1-1.1 7-4.8 7-9V6l-7-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m9.5 12 1.8 1.8L14.5 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>Clear competition rules</h3>
+          <p>Every tournament ships with defined rules before registration opens.</p>
+        </div>
+        <div class="feature" data-reveal>
+          <div class="feature__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3.5" width="16" height="17" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h8M8 11.5h8M8 15h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Fast registration</h3>
+          <p>A simple team registration flow, built for mobile.</p>
+        </div>
+        <div class="feature" data-reveal>
+          <div class="feature__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 10.5v3a1 1 0 0 0 1 1h2l5 3.5v-12L7 9.5H5a1 1 0 0 0-1 1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M16.5 9a4 4 0 0 1 0 6M19 7a7 7 0 0 1 0 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Regular updates</h3>
+          <p>Schedules, slot counts and announcements posted as they happen.</p>
+        </div>
+        <div class="feature" data-reveal>
+          <div class="feature__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 6a8 2.4 0 0 0 16 0A8 2.4 0 0 0 4 6Z" stroke="currentColor" stroke-width="1.6"/><path d="M4 6v5a8 2.4 0 0 0 16 0V6" stroke="currentColor" stroke-width="1.6"/><path d="M4 11v5a8 2.4 0 0 0 16 0v-5" stroke="currentColor" stroke-width="1.6"/></svg>
+          </div>
+          <h3>Transparent records</h3>
+          <p>Team tournament history, tracked and searchable over time.</p>
+        </div>
+        <div class="feature" data-reveal>
+          <div class="feature__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="5.2" stroke="currentColor" stroke-width="1.6"/><path d="M9.5 8.7h1.8a1.1 1.1 0 0 1 0 2.2h-1.6a1.1 1.1 0 0 0 0 2.2h2M12 7.5v1m0 5v1" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="m8.5 16.5-1.8 5 5.3-2.3 5.3 2.3-1.8-5" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>Clear prize information</h3>
+          <p>Prize pools and payouts published per tournament, no guesswork.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       HOW IT WORKS
+       ========================================================== -->
+  <section class="section section--tight how-it-works">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <h2>How it works</h2>
+        <p>From picking a game to competing on match day.</p>
+      </div>
+
+      <div class="steps">
+        <div class="step" data-reveal>
+          <span class="step__num" aria-hidden="true">01</span>
+          <h3>Choose your game</h3>
+          <p>Pick BGMI or FF MAX — each has its own tournament track.</p>
+        </div>
+        <div class="step" data-reveal>
+          <span class="step__num" aria-hidden="true">02</span>
+          <h3>Check the tournament</h3>
+          <p>Review the match, entry fee, prize pool and rules.</p>
+        </div>
+        <div class="step" data-reveal>
+          <span class="step__num" aria-hidden="true">03</span>
+          <h3>Register your team</h3>
+          <p>Submit your squad details before the registration deadline.</p>
+        </div>
+        <div class="step" data-reveal>
+          <span class="step__num" aria-hidden="true">04</span>
+          <h3>Compete and win</h3>
+          <p>Get match details on WhatsApp and play it out.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       TOURNAMENT HISTORY PREVIEW
+       ========================================================== -->
+  <section class="section">
+    <div class="container">
+      <div class="history" data-reveal>
+        <div class="history__visual" aria-hidden="true">
+          <svg viewBox="0 0 360 300" width="100%" height="100%">
+            <defs>
+              <linearGradient id="barGrad" x1="0" y1="1" x2="0" y2="0">
+                <stop offset="0%" stop-color="#1652f0"/>
+                <stop offset="100%" stop-color="#7fa4ff"/>
+              </linearGradient>
+            </defs>
+            <!-- abstract leaderboard bars -->
+            <g>
+              <rect x="30" y="150" width="34" height="110" rx="4" fill="url(#barGrad)" opacity="0.85"/>
+              <rect x="84" y="100" width="34" height="160" rx="4" fill="url(#barGrad)"/>
+              <rect x="138" y="180" width="34" height="80" rx="4" fill="url(#barGrad)" opacity="0.7"/>
+              <rect x="192" y="60" width="34" height="200" rx="4" fill="url(#barGrad)" opacity="0.95"/>
+              <rect x="246" y="130" width="34" height="130" rx="4" fill="url(#barGrad)" opacity="0.75"/>
+            </g>
+            <!-- connecting trend line -->
+            <path d="M47 150 111 100 155 180 209 60 263 130" fill="none" stroke="#9db8ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+            <circle cx="209" cy="60" r="5" fill="#fff"/>
+            <!-- base line / ledger rows -->
+            <line x1="20" y1="270" x2="300" y2="270" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+            <line x1="20" y1="282" x2="230" y2="282" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+            <!-- trophy marker above top bar -->
+            <g transform="translate(209,36)">
+              <circle r="14" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.3)"/>
+              <path d="M-5 -4h10v3.4a5 5 0 0 1-10 0V-4Z" stroke="#fff" stroke-width="1.3" fill="none"/>
+            </g>
+          </svg>
+        </div>
+        <div class="history__copy">
+          <h2>Track your journey</h2>
+          <p>Explore your team's tournament history, results and achievements as they're recorded — no invented statistics, just what your team actually plays.</p>
+          <div class="btn-row">
+            <a href="/bgmi/history/" class="btn btn--on-dark">BGMI History</a>
+            <a href="/ff-max/history/" class="btn btn--on-dark">FF MAX History</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       WHATSAPP COMMUNITY
+       ========================================================== -->
+  <section class="section section--tight" id="whatsapp">
+    <div class="container">
+      <div class="whatsapp" data-reveal>
+        <div>
+          <div class="whatsapp__icon" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M17 14c-.3-.15-1.75-.86-2-.96-.27-.1-.47-.15-.66.15-.2.3-.76.96-.93 1.16-.17.2-.34.22-.63.07-.3-.15-1.24-.46-2.36-1.46-.87-.78-1.46-1.74-1.63-2.03-.17-.3-.02-.46.13-.6.13-.14.3-.35.44-.53.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.66-1.6-.9-2.18-.24-.58-.48-.5-.66-.5h-.56c-.2 0-.52.07-.79.37-.27.3-1.05 1.02-1.05 2.5s1.07 2.9 1.22 3.1c.15.2 2.1 3.2 5.08 4.5.71.3 1.26.49 1.7.62.71.23 1.36.2 1.87.12.57-.08 1.75-.71 2-1.4.24-.7.24-1.29.17-1.4-.07-.13-.27-.2-.57-.35Z" fill="currentColor"/><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.34A10 10 0 1 0 12 2Zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.2-3 .8.8-2.93-.21-.3A8.2 8.2 0 1 1 12 20.2Z" fill="currentColor"/></svg>
+          </div>
+          <h2>Join the ES Trainers Community</h2>
+          <p>Get tournament announcements, registration updates, schedules, results and important notices directly on WhatsApp.</p>
+          <div class="whatsapp__actions">
+            <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" class="btn btn--primary">
+              Join WhatsApp Community
+            </a>
+          </div>
+        </div>
+
+        <!-- Original UI concept graphic — not real messages/screenshots -->
+        <div class="whatsapp__stack" aria-hidden="true">
+          <div class="wa-chip">
+            <span class="wa-chip__dot"></span>
+            <span>Tournament announced</span>
+          </div>
+          <div class="wa-chip wa-chip--in">
+            <span class="wa-chip__dot"></span>
+            <span>Registration open</span>
+          </div>
+          <div class="wa-chip wa-chip--in-2">
+            <span class="wa-chip__dot"></span>
+            <span>Match schedule</span>
+          </div>
+          <div class="wa-chip wa-chip--in-3">
+            <span class="wa-chip__dot"></span>
+            <span>Results published</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================================
+       FINAL CTA — cinematic closing section. The oversized ES mark
+       and orbit rings sit behind the copy as ambient scenery; they
+       never compete with the text for attention (see final-cta__field).
+       ========================================================== -->
+  <section class="final-cta">
+    <div class="final-cta__field" aria-hidden="true">
+      <svg class="final-cta__orbit" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <radialGradient id="ctaCoreGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#5a8dff" stop-opacity="0.5"/>
+            <stop offset="100%" stop-color="#5a8dff" stop-opacity="0"/>
+          </radialGradient>
+          <linearGradient id="ctaBeam" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#5a8dff" stop-opacity="0"/>
+            <stop offset="50%" stop-color="#9db8ff" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#5a8dff" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+
+        <circle cx="500" cy="500" r="260" fill="url(#ctaCoreGlow)"/>
+
+        <!-- orbit rings around an abstract ES mark -->
+        <g class="final-cta__ring final-cta__ring--a">
+          <circle cx="500" cy="500" r="230" fill="none" stroke="rgba(90,141,255,0.22)" stroke-width="1"/>
+          <circle cx="730" cy="500" r="4" fill="#9db8ff"/>
+        </g>
+        <g class="final-cta__ring final-cta__ring--b">
+          <circle cx="500" cy="500" r="310" fill="none" stroke="rgba(90,141,255,0.14)" stroke-width="1" stroke-dasharray="2 14"/>
+          <circle cx="500" cy="190" r="3" fill="#5a8dff"/>
+        </g>
+        <g class="final-cta__ring final-cta__ring--c">
+          <circle cx="500" cy="500" r="180" fill="none" stroke="rgba(157,184,255,0.3)" stroke-width="1" stroke-dasharray="1 10"/>
+        </g>
+
+        <!-- abstract "ES" mark, built from geometry rather than typography -->
+        <g class="final-cta__mark" transform="translate(500,500)">
+          <path d="M-70 -70 H30 M-70 -70 V-10 H10 M-70 -10 V50 H30" fill="none" stroke="#eaf0ff" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+          <path d="M55 -70 C 95 -70 95 -30 55 -25 C 95 -20 95 55 55 55" fill="none" stroke="#5a8dff" stroke-width="10" stroke-linecap="round" opacity="0.9"/>
+        </g>
+
+        <!-- fine technical grid, faded toward the edges -->
+        <g class="final-cta__grid" opacity="0.35">
+          <path d="M200 500h600M500 200v600" stroke="rgba(90,141,255,0.15)" stroke-width="1"/>
+        </g>
+
+        <line class="final-cta__sweep" x1="0" y1="500" x2="1000" y2="500" stroke="url(#ctaBeam)" stroke-width="2"/>
+
+        <circle class="final-cta__mote final-cta__mote--1" cx="260" cy="300" r="2.4" fill="#9db8ff"/>
+        <circle class="final-cta__mote final-cta__mote--2" cx="760" cy="700" r="2" fill="#5a8dff"/>
+        <circle class="final-cta__mote final-cta__mote--3" cx="720" cy="260" r="1.8" fill="#eaf0ff"/>
+      </svg>
+    </div>
+
+    <div class="container final-cta__grid-layout">
+      <div class="final-cta__copy" data-reveal>
+        <p class="final-cta__eyebrow">Ready for the next match?</p>
+        <h2 class="final-cta__heading">
+          <span class="final-cta__line"><span>Enter the</span></span>
+          <span class="final-cta__line"><span>ES Trainers Arena</span></span>
+        </h2>
+        <p class="final-cta__desc">Choose your game, build your squad and compete in structured tournaments.</p>
+        <div class="btn-row final-cta__actions">
+          <a href="/bgmi/" class="btn btn--primary">Explore BGMI</a>
+          <a href="/ff-max/" class="btn btn--on-dark">Explore FF MAX</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==========================================================
+     FOOTER
+     ========================================================== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__top">
+      <div>
+        <a href="/" class="brand" aria-label="ES Trainers home">
+          <img src="assets/logo/logo.png" alt="" class="brand__mark" width="34" height="34">
+          <span class="brand__name">ES Trainers</span>
+        </a>
+        <p class="footer__desc">A tournament platform for competitive BGMI and FF MAX players.</p>
+      </div>
+
+      <div class="footer__col">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/bgmi/">BGMI</a></li>
+          <li><a href="/ff-max/">FF MAX</a></li>
+          <li><a href="/about/">About</a></li>
+          <li><a href="/contact/">Contact</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h4>Community</h4>
+        <ul>
+          <li><a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank">WhatsApp Community</a></li>
+          <li><a href="mailto:esportstraning@gmail.com">esportstraning@gmail.com</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <span>© ES Trainers. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="js/config.js"></script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
