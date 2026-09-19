@@ -1,0 +1,23 @@
+Put licensed BGMI artwork here (key art, character art, map imagery).
+
+The BGMI game card currently uses an ORIGINAL cinematic scene drawn in
+SVG inside index.html — night ridgelines, a transport plane on its drop
+run, parachutes, a rim-lit trooper silhouette and a tactical HUD. It is
+built to read as a BGMI tournament card without using any game IP,
+because real BGMI key art is licensed and must not be scraped.
+
+To swap in licensed art once you have it:
+
+  1. Drop the image here, e.g. assets/bgmi/key-art.jpg
+  2. In css/style.css, set the card's art variable:
+
+       .game-card--bgmi {
+         --card-art: url("../assets/bgmi/key-art.jpg");
+         --card-art-opacity: 0.6;   /* optional, defaults to 0.5 */
+       }
+
+The image renders in .game-card__photo, which sits ABOVE the background
+atmosphere and BELOW the readability gradient — so the white card text
+stays legible on top of it. You can keep or remove the SVG scene: to
+remove it, delete the <svg class="game-card__art"> block from the BGMI
+card in index.html.
