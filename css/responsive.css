@@ -1,0 +1,96 @@
+/* ==========================================================
+   ES TRAINERS — Responsive Overrides
+   Mobile styles live in style.css by default; this file adds
+   layout changes as viewport width increases.
+   ========================================================== */
+
+/* ---- Small phones (< 480px): keep the redesigned game cards and
+   final CTA readable and free of overflow at the narrowest widths. ---- */
+@media (max-width: 479px) {
+  .game-card { min-height: 380px; }
+  .game-card__content { padding: var(--space-5) var(--space-4); }
+  .final-cta { padding: var(--space-7) 0; min-height: auto; }
+  .final-cta__orbit { width: 160vw; opacity: 0.4; }
+  .final-cta__desc { max-width: 100%; }
+  .ig__panel { padding: var(--space-5) var(--space-4); }
+  .ig-card { padding: var(--space-4); }
+}
+
+/* ---- 480px: slightly larger phones ---- */
+@media (min-width: 480px) {
+  .btn-row { flex-wrap: nowrap; }
+}
+
+/* ---- 640px ---- */
+@media (min-width: 640px) {
+  .games__grid { grid-template-columns: 1fr; }
+  .features__grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ---- 768px: tablet ---- */
+@media (min-width: 768px) {
+  .container { padding: 0 var(--space-5); }
+
+  .hero__grid { grid-template-columns: 1.1fr 0.9fr; align-items: center; }
+  .hero__visual { min-height: 380px; }
+
+  .games__grid { grid-template-columns: repeat(2, 1fr); }
+  .game-card { min-height: 520px; }
+
+  .tournaments__grid { grid-template-columns: repeat(2, 1fr); }
+
+  .ig__panel { padding: var(--space-7) var(--space-6); }
+  /* BGMI and FF MAX at the same priority: side by side, not stacked. */
+  .ig__status-list--multi { grid-template-columns: repeat(2, 1fr); }
+
+  .steps { grid-template-columns: repeat(2, 1fr); }
+
+  .whatsapp { grid-template-columns: 1.3fr 0.7fr; text-align: left; }
+
+  .footer__top { grid-template-columns: 1.4fr repeat(2, 1fr); }
+
+  .footer__bottom { flex-direction: row; align-items: center; justify-content: space-between; }
+}
+
+/* ---- 1024px: small desktop ---- */
+@media (min-width: 1024px) {
+  .nav__links { display: flex; }
+  .nav__actions .btn--primary { display: inline-flex; }
+  .nav__toggle { display: none; }
+  .mobile-menu { display: none; }
+
+  .section { padding: var(--space-9) 0; }
+
+  .game-card { min-height: 560px; }
+
+  .tournaments__grid { grid-template-columns: repeat(3, 1fr); }
+
+  .features__grid { grid-template-columns: repeat(3, 1fr); }
+
+  /* One active tournament: copy on the left, status on the right,
+     so the panel stays compact instead of growing very tall. With
+     two games active the panel stays full width and the two status
+     cards sit side by side (rule above). */
+  .ig--has-status:not(.ig--multi) .ig__body {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    column-gap: var(--space-6);
+    align-items: start;
+  }
+  .ig--has-status:not(.ig--multi) .ig__intro,
+  .ig--has-status:not(.ig--multi) .ig__action,
+  .ig--has-status:not(.ig--multi) .ig__note { grid-column: 1; }
+  .ig--has-status:not(.ig--multi) .ig__status { grid-column: 2; grid-row: 1 / span 3; }
+
+  .steps { grid-template-columns: repeat(4, 1fr); }
+  .steps::before { display: block; }
+
+  .history { padding: var(--space-8) var(--space-7); }
+
+  .final-cta { min-height: 70vh; }
+  .final-cta__copy { max-width: 620px; }
+}
+
+/* ---- 1280px ---- */
+@media (min-width: 1280px) {
+  .hero { padding-top: calc(var(--space-9) + 4rem); }
+}
