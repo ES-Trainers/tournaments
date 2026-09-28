@@ -1,0 +1,2 @@
+Optional: custom icon set (SVG) if you want to replace the emoji
+icons used in the "Why ES Trainers" feature cards.
