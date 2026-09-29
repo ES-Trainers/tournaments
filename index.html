@@ -29,9 +29,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="css/style.css">
-<link rel="stylesheet" href="css/responsive.css">
-<link rel="stylesheet" href="css/animations.css">
+<link rel="stylesheet" href="index.css">
 </head>
 <body>
 
@@ -42,21 +40,21 @@
      ========================================================== -->
 <header class="nav" id="site-nav">
   <div class="container nav__inner">
-    <a href="/" data-route="home" class="brand" aria-label="ES Trainers home">
+    <a href="index.html" class="brand" aria-label="ES Trainers home">
       <img src="assets/logo/logo.png" alt="" class="brand__mark" width="34" height="34">
       <span class="brand__name">ES Trainers</span>
     </a>
 
     <nav class="nav__links" aria-label="Primary">
-      <a href="/" data-route="home">Home</a>
-      <a href="/#tournaments" data-route="tournaments">BGMI</a>
-      <a href="/#tournaments" data-route="tournaments">FF MAX</a>
-      <a href="/#about" data-route="about">About</a>
-      <a href="mailto:esportstraning@gmail.com">Contact</a>
+      <a href="index.html">Home</a>
+      <a href="bgmi.html">BGMI</a>
+      <a href="ffmax.html">FF MAX</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
     </nav>
 
     <div class="nav__actions">
-      <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" class="btn btn--primary">
+      <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" rel="noopener noreferrer" class="btn btn--primary">
         Join Community
       </a>
       <button class="nav__toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
@@ -70,13 +68,13 @@
 <div class="mobile-menu" id="mobile-menu">
   <div class="mobile-menu__panel">
     <nav class="mobile-menu__links" aria-label="Mobile primary">
-      <a href="/" data-route="home">Home</a>
-      <a href="/#tournaments" data-route="tournaments">BGMI</a>
-      <a href="/#tournaments" data-route="tournaments">FF MAX</a>
-      <a href="/#about" data-route="about">About</a>
-      <a href="mailto:esportstraning@gmail.com">Contact</a>
+      <a href="index.html">Home</a>
+      <a href="bgmi.html">BGMI</a>
+      <a href="ffmax.html">FF MAX</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
     </nav>
-    <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" class="btn btn--primary">
+    <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" rel="noopener noreferrer" class="btn btn--primary">
       Join Community
     </a>
   </div>
@@ -148,8 +146,8 @@
           and a straightforward path from registration to results.
         </p>
         <div class="hero__actions btn-row">
-          <a href="/#tournaments" data-route="tournaments" class="btn btn--primary">Explore BGMI</a>
-          <a href="/#tournaments" data-route="tournaments" class="btn btn--on-dark">Explore FF MAX</a>
+          <a href="bgmi.html" class="btn btn--primary">Explore BGMI</a>
+          <a href="ffmax.html" class="btn btn--on-dark">Explore FF MAX</a>
         </div>
       </div>
 
@@ -217,11 +215,11 @@
         gradient -> text -> CTA.
 
         To drop in licensed key art later, set --card-art on the card (see
-        .game-card__photo in css/style.css and assets/bgmi/PLACE_ASSETS_HERE.txt);
+        .game-card__photo in index.css and assets/bgmi/PLACE_ASSETS_HERE.txt);
         it layers UNDER the readability gradient so the text stays legible.
       -->
       <div class="games__grid">
-        <a href="/#tournaments" data-route="tournaments" class="game-card game-card--bgmi" data-reveal data-tilt>
+        <a href="bgmi.html" class="game-card game-card--bgmi" data-reveal data-tilt>
           <div class="game-card__atmosphere" aria-hidden="true"></div>
           <div class="game-card__photo" aria-hidden="true"></div>
 
@@ -339,7 +337,7 @@
           </div>
         </a>
 
-        <a href="/#tournaments" data-route="tournaments" class="game-card game-card--ffmax" data-reveal data-tilt>
+        <a href="ffmax.html" class="game-card game-card--ffmax" data-reveal data-tilt>
           <div class="game-card__atmosphere" aria-hidden="true"></div>
           <div class="game-card__photo" aria-hidden="true"></div>
 
@@ -468,7 +466,7 @@
       </div>
 
       <div class="tournaments__grid" id="tournaments-grid" aria-live="polite">
-        <!-- Populated by js/tournaments.js from two independent Firebase
+        <!-- Populated by index.js from two independent Firebase
              projects via realtime onSnapshot listeners. This block is the
              ONLY loading state on the page: it is removed once after the
              first snapshot and never shown again, no matter how many
@@ -493,7 +491,7 @@
        iframe, no embed, no API call and no post data of any kind —
        Instagram owns every post, reel, schedule and result.
        The panel, handle and CTA exist in the markup from the start;
-       js/instagram.js only fills the status area and rewrites text,
+       index.js only fills the status area and rewrites text,
        so a realtime update never re-renders the section.
        ========================================================== -->
   <section class="section ig" id="instagram">
@@ -665,8 +663,8 @@
           <h2>Track your journey</h2>
           <p>Explore your team's tournament history, results and achievements as they're recorded — no invented statistics, just what your team actually plays.</p>
           <div class="btn-row">
-            <a href="/#tournaments" data-route="tournaments" class="btn btn--on-dark">BGMI History</a>
-            <a href="/#tournaments" data-route="tournaments" class="btn btn--on-dark">FF MAX History</a>
+            <a href="bgmi.html" class="btn btn--on-dark">BGMI History</a>
+            <a href="ffmax.html" class="btn btn--on-dark">FF MAX History</a>
           </div>
         </div>
       </div>
@@ -686,7 +684,7 @@
           <h2>Join the ES Trainers Community</h2>
           <p>Get tournament announcements, registration updates, schedules, results and important notices directly on WhatsApp.</p>
           <div class="whatsapp__actions">
-            <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" class="btn btn--primary">
+            <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" rel="noopener noreferrer" class="btn btn--primary">
               Join WhatsApp Community
             </a>
           </div>
@@ -778,8 +776,8 @@
         </h2>
         <p class="final-cta__desc">Choose your game, build your squad and compete in structured tournaments.</p>
         <div class="btn-row final-cta__actions">
-          <a href="/#tournaments" data-route="tournaments" class="btn btn--primary">Explore BGMI</a>
-          <a href="/#tournaments" data-route="tournaments" class="btn btn--on-dark">Explore FF MAX</a>
+          <a href="bgmi.html" class="btn btn--primary">Explore BGMI</a>
+          <a href="ffmax.html" class="btn btn--on-dark">Explore FF MAX</a>
         </div>
       </div>
     </div>
@@ -794,7 +792,7 @@
   <div class="container">
     <div class="footer__top">
       <div>
-        <a href="/" data-route="home" class="brand" aria-label="ES Trainers home">
+        <a href="index.html" class="brand" aria-label="ES Trainers home">
           <img src="assets/logo/logo.png" alt="" class="brand__mark" width="34" height="34">
           <span class="brand__name">ES Trainers</span>
         </a>
@@ -804,18 +802,18 @@
       <div class="footer__col">
         <h4>Navigate</h4>
         <ul>
-          <li><a href="/" data-route="home">Home</a></li>
-          <li><a href="/#tournaments" data-route="tournaments">BGMI</a></li>
-          <li><a href="/#tournaments" data-route="tournaments">FF MAX</a></li>
-          <li><a href="/#about" data-route="about">About</a></li>
-          <li><a href="mailto:esportstraning@gmail.com">Contact</a></li>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="bgmi.html">BGMI</a></li>
+          <li><a href="ffmax.html">FF MAX</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
         </ul>
       </div>
 
       <div class="footer__col">
         <h4>Community</h4>
         <ul>
-          <li><a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank">WhatsApp Community</a></li>
+          <li><a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" rel="noopener noreferrer">WhatsApp Community</a></li>
           <li><a href="mailto:esportstraning@gmail.com">esportstraning@gmail.com</a></li>
         </ul>
       </div>
@@ -827,7 +825,6 @@
   </div>
 </footer>
 
-<script src="js/config.js"></script>
-<script type="module" src="js/main.js"></script>
+<script type="module" src="index.js"></script>
 </body>
 </html>
