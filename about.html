@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About ES Trainers | ES Trainers</title>
+<meta name="description" content="ES Trainers is a tournament community that organizes competitive BGMI and FF MAX tournaments and publishes tournament information for teams.">
+<link rel="canonical" href="https://estrainers.in/about.html">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ES Trainers">
+<meta property="og:title" content="About ES Trainers | ES Trainers">
+<meta property="og:description" content="ES Trainers organizes competitive BGMI and FF MAX tournaments and builds a gaming community around them.">
+<meta property="og:url" content="https://estrainers.in/about.html">
+<meta property="og:image" content="https://estrainers.in/assets/logo/logo.png">
+
+<!-- Twitter/X -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="About ES Trainers | ES Trainers">
+<meta name="twitter:description" content="ES Trainers organizes competitive BGMI and FF MAX tournaments and builds a gaming community around them.">
+
+<!-- Favicon: generated from the official ES Trainers logo -->
+<link rel="icon" type="image/png" sizes="32x32" href="assets/logo/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/logo/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="about.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ==========================================================
+     NAVBAR
+     ========================================================== -->
+<header class="nav" id="site-nav">
+  <div class="container nav__inner">
+    <a href="index.html" class="brand" aria-label="ES Trainers home">
+      <img src="assets/logo/logo.png" alt="" class="brand__mark" width="34" height="34">
+      <span class="brand__name">ES Trainers</span>
+    </a>
+
+    <nav class="nav__links" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="bgmi.html">BGMI</a>
+      <a href="ffmax.html">FF MAX</a>
+      <a href="about.html" aria-current="page">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+
+    <div class="nav__actions">
+      <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" rel="noopener noreferrer" class="btn btn--primary">
+        Join Community
+      </a>
+      <button class="nav__toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile menu -->
+<div class="mobile-menu" id="mobile-menu">
+  <div class="mobile-menu__panel">
+    <nav class="mobile-menu__links" aria-label="Mobile primary">
+      <a href="index.html">Home</a>
+      <a href="bgmi.html">BGMI</a>
+      <a href="ffmax.html">FF MAX</a>
+      <a href="about.html" aria-current="page">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" rel="noopener noreferrer" class="btn btn--primary">
+      Join Community
+    </a>
+  </div>
+</div>
+
+<main id="main">
+
+  <!-- ABOUT HERO (same hero language as the homepage) -->
+  <section class="hero">
+    <!-- Layered cinematic background: grid, light streaks, drifting particles -->
+    <svg class="hero__bg-grid" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <pattern id="grid" width="46" height="46" patternUnits="userSpaceOnUse">
+          <path d="M46 0H0V46" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        </pattern>
+        <radialGradient id="gridFade" cx="72%" cy="30%" r="65%">
+          <stop offset="0%" stop-color="#fff" stop-opacity="1"/>
+          <stop offset="70%" stop-color="#fff" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+        <mask id="gridMask">
+          <rect width="800" height="600" fill="url(#gridFade)"/>
+        </mask>
+      </defs>
+      <rect width="800" height="600" fill="url(#grid)" mask="url(#gridMask)"/>
+    </svg>
+
+    <!-- Fine technical framing lines + corner ticks -->
+    <svg class="hero__technical" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <circle cx="900" cy="260" r="260" fill="none" stroke="rgba(90,141,255,0.14)" stroke-width="1"/>
+      <circle cx="900" cy="260" r="330" fill="none" stroke="rgba(90,141,255,0.08)" stroke-width="1" stroke-dasharray="2 10"/>
+      <path d="M70 40v34M70 40h34" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+      <path d="M1130 660v-34M1130 660h-34" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+    </svg>
+
+    <svg class="hero__streaks" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="streakGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#5A8DFF" stop-opacity="0"/>
+          <stop offset="50%" stop-color="#5A8DFF" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#5A8DFF" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <line class="hero__streak" x1="-100" y1="120" x2="700" y2="-80" stroke="url(#streakGrad)" stroke-width="2"/>
+      <line class="hero__streak hero__streak--2" x1="200" y1="760" x2="1300" y2="120" stroke="url(#streakGrad)" stroke-width="1.5"/>
+      <line class="hero__streak hero__streak--3" x1="900" y1="800" x2="1400" y2="200" stroke="url(#streakGrad)" stroke-width="1"/>
+    </svg>
+
+    <svg class="hero__particles" viewBox="0 0 480 480" aria-hidden="true">
+      <circle class="hero__particle" cx="70" cy="120" r="2.4"/>
+      <circle class="hero__particle hero__particle--b" cx="410" cy="90" r="1.8"/>
+      <circle class="hero__particle hero__particle--c" cx="60" cy="340" r="2"/>
+      <circle class="hero__particle" cx="430" cy="300" r="1.6"/>
+      <circle class="hero__particle hero__particle--b" cx="240" cy="60" r="1.8"/>
+      <circle class="hero__particle hero__particle--c" cx="380" cy="420" r="2.2"/>
+      <circle class="hero__particle" cx="130" cy="440" r="1.6"/>
+    </svg>
+
+    <div class="container hero__grid">
+      <div class="hero__copy">
+        <p class="hero__eyebrow">About ES Trainers</p>
+        <h1>About <span>ES Trainers</span></h1>
+        <p class="hero__tagline">Play · Improve · Compete · Win</p>
+        <p class="hero__desc">
+          ES Trainers organizes competitive tournaments for BGMI and FF MAX
+          and builds a gaming community around them.
+        </p>
+        <div class="hero__actions btn-row">
+          <a href="index.html#tournaments" class="btn btn--primary">View tournaments</a>
+          <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" class="btn btn--on-dark" target="_blank" rel="noopener noreferrer">Join community</a>
+        </div>
+      </div>
+
+      <div class="hero__visual" aria-hidden="true">
+        <svg class="hero__rings" viewBox="0 0 480 480" width="100%" height="100%">
+          <defs>
+            <radialGradient id="orbBlue" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#5A8DFF" stop-opacity="0.8"/>
+              <stop offset="100%" stop-color="#5A8DFF" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#5A8DFF"/>
+              <stop offset="100%" stop-color="#1652F0"/>
+            </linearGradient>
+          </defs>
+          <circle class="hero__orb" cx="260" cy="210" r="160" fill="url(#orbBlue)"/>
+          <circle class="hero__orb hero__orb--slow" cx="150" cy="330" r="90" fill="url(#orbBlue)" opacity="0.55"/>
+          <g transform="translate(240,240)">
+            <circle r="190" fill="none" stroke="url(#ringGrad)" stroke-width="1" opacity="0.3"/>
+            <circle r="150" fill="none" stroke="url(#ringGrad)" stroke-width="1.5" opacity="0.45"/>
+            <g class="hero__ring-spin">
+              <circle r="215" fill="none" stroke="url(#ringGrad)" stroke-width="1" stroke-dasharray="1 14" opacity="0.55"/>
+              <circle cx="215" cy="0" r="3.2" fill="#9db8ff"/>
+            </g>
+            <g class="hero__ring-spin hero__ring-spin--rev">
+              <circle r="235" fill="none" stroke="url(#ringGrad)" stroke-width="1" stroke-dasharray="3 3 3 40" opacity="0.35"/>
+              <circle cx="-235" cy="0" r="2.4" fill="#5a8dff"/>
+            </g>
+          </g>
+        </svg>
+
+        <!-- Real ES Trainers logo, centered with a soft glow -->
+        <div class="hero__logo-wrap">
+          <img src="assets/logo/logo.png" alt="ES Trainers" class="hero__logo">
+        </div>
+
+        <span class="hero__chip hero__chip--1" aria-hidden="true"></span>
+        <span class="hero__chip hero__chip--2" aria-hidden="true"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHO WE ARE -->
+  <section class="section awho" id="who-we-are">
+    <div class="container awho__grid">
+      <div class="section-head" data-reveal>
+        <h2>Who we are</h2>
+      </div>
+      <div class="awho__text" data-reveal>
+        <p>ES Trainers is an esports tournament and community platform focused on BGMI and Free Fire MAX.</p>
+        <p>We organize competitive tournaments for squads in both games and publish the details of each tournament in one place, so teams can see what is coming up and join in.</p>
+        <p>BGMI and FF MAX each have their own tournament page on this website.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT WE DO -->
+  <section class="section features" id="what-we-do">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <h2>What we do</h2>
+        <p>The activities that make up ES Trainers today.</p>
+      </div>
+      <div class="features__grid">
+        <article class="feature" data-reveal>
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M7 4h10v4a5 5 0 0 1-5 5 5 5 0 0 1-5-5V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 13v3m-3 4h6m-3-4v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+          <h3>BGMI tournaments</h3>
+          <p>Competitive BGMI tournaments, with squad matches played across multiple maps.</p>
+        </article>
+        <article class="feature" data-reveal>
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M7 4h10v4a5 5 0 0 1-5 5 5 5 0 0 1-5-5V4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 5H4a1 1 0 0 0-1 1v1a4 4 0 0 0 4 4M17 5h3a1 1 0 0 1 1 1v1a4 4 0 0 1-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M12 13v3m-3 4h6m-3-4v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+          <h3>FF MAX tournaments</h3>
+          <p>Fast-paced squad tournaments built for Free Fire MAX.</p>
+        </article>
+        <article class="feature" data-reveal>
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M12 3 5 6v5c0 4.2 2.9 7.9 7 9 4.1-1.1 7-4.8 7-9V6l-7-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m9.5 12 1.8 1.8L14.5 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <h3>Tournament information</h3>
+          <p>The match, entry fee, prize pool and team slots are published for every tournament.</p>
+        </article>
+        <article class="feature" data-reveal>
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M4 10.5v3a1 1 0 0 0 1 1h2l5 3.5v-12L7 9.5H5a1 1 0 0 0-1 1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M16.5 9a4 4 0 0 1 0 6M19 7a7 7 0 0 1 0 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Upcoming events</h3>
+          <p>Teams can see upcoming and live tournaments on the BGMI and FF MAX pages.</p>
+        </article>
+        <article class="feature" data-reveal>
+          <div class="feature__icon">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3.5" width="16" height="17" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 8h8M8 11.5h8M8 15h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+          <h3>Registration pathways</h3>
+          <p>When registration is open, the tournament links straight to its team registration page.</p>
+        </article>
+        <article class="feature" data-reveal>
+          <div class="feature__icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.6"/><path d="M3 19c0-3.2 2.7-5 6-5s6 1.8 6 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M16 5.2a3 3 0 0 1 0 5.6M18.5 14.4c1.6.7 2.5 2.1 2.5 4.6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <h3>A gaming community</h3>
+          <p>Announcements and updates are shared with players on WhatsApp and Instagram.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- OUR FOCUS / COMMUNITY -->
+  <section class="section section--dark afocus" id="our-focus">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <h2>Our focus and community</h2>
+        <p>ES Trainers is built around competitive play and the people who take part in it.</p>
+      </div>
+      <ul class="afocus__grid">
+        <li class="afocus__item" data-reveal><h3>Competitive gaming</h3><p>Tournaments are the centre of ES Trainers: teams play structured matches against each other.</p></li>
+        <li class="afocus__item" data-reveal><h3>Organized tournaments</h3><p>Each tournament is listed with its match, entry fee, prize pool and slot count.</p></li>
+        <li class="afocus__item" data-reveal><h3>Team participation</h3><p>Tournaments are played by squads, so registration is made for teams rather than individuals.</p></li>
+        <li class="afocus__item" data-reveal><h3>Community engagement</h3><p>Players can join the WhatsApp community and follow ES Trainers on Instagram.</p></li>
+        <li class="afocus__item" data-reveal><h3>Clear tournament information</h3><p>Details are shown as published, and slot counts update on the page without a refresh.</p></li>
+        <li class="afocus__item" data-reveal><h3>Accessible participation</h3><p>The site is built for mobile, with a simple path from a tournament to its registration page.</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- WHY ES TRAINERS -->
+  <section class="section awhy" id="why-es-trainers">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <h2>Why ES Trainers</h2>
+        <p>A tournament platform built around structure and transparency, not hype.</p>
+      </div>
+      <div class="awhy__grid">
+        <div class="awhy__item" data-reveal><h3>Competitive tournaments</h3><p>Structured competition for BGMI and FF MAX squads.</p></div>
+        <div class="awhy__item" data-reveal><h3>Clear tournament information</h3><p>Match, entry fee, prize pool and slots, published per tournament.</p></div>
+        <div class="awhy__item" data-reveal><h3>BGMI and FF MAX</h3><p>Two dedicated tournament pages, one for each game.</p></div>
+        <div class="awhy__item" data-reveal><h3>Community-driven participation</h3><p>Updates and announcements are shared where players already are.</p></div>
+        <div class="awhy__item" data-reveal><h3>A simple registration journey</h3><p>From the tournament card straight to the team registration page.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight" id="whatsapp">
+    <div class="container">
+      <div class="whatsapp" data-reveal>
+        <div>
+          <div class="whatsapp__icon" aria-hidden="true">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M17 14c-.3-.15-1.75-.86-2-.96-.27-.1-.47-.15-.66.15-.2.3-.76.96-.93 1.16-.17.2-.34.22-.63.07-.3-.15-1.24-.46-2.36-1.46-.87-.78-1.46-1.74-1.63-2.03-.17-.3-.02-.46.13-.6.13-.14.3-.35.44-.53.15-.17.2-.3.3-.5.1-.2.05-.37-.02-.52-.07-.15-.66-1.6-.9-2.18-.24-.58-.48-.5-.66-.5h-.56c-.2 0-.52.07-.79.37-.27.3-1.05 1.02-1.05 2.5s1.07 2.9 1.22 3.1c.15.2 2.1 3.2 5.08 4.5.71.3 1.26.49 1.7.62.71.23 1.36.2 1.87.12.57-.08 1.75-.71 2-1.4.24-.7.24-1.29.17-1.4-.07-.13-.27-.2-.57-.35Z" fill="currentColor"/><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5.1-1.34A10 10 0 1 0 12 2Zm0 18.2c-1.66 0-3.2-.46-4.52-1.26l-.32-.2-3 .8.8-2.93-.21-.3A8.2 8.2 0 1 1 12 20.2Z" fill="currentColor"/></svg>
+          </div>
+          <h2>Join the ES Trainers Community</h2>
+          <p>Get tournament announcements, registration updates, schedules, results and important notices directly on WhatsApp.</p>
+          <div class="whatsapp__actions">
+            <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" rel="noopener noreferrer" class="btn btn--primary">
+              Join WhatsApp Community
+            </a>
+          </div>
+        </div>
+
+        <!-- Original UI concept graphic — not real messages/screenshots -->
+        <div class="whatsapp__stack" aria-hidden="true">
+          <div class="wa-chip">
+            <span class="wa-chip__dot"></span>
+            <span>Tournament announced</span>
+          </div>
+          <div class="wa-chip wa-chip--in">
+            <span class="wa-chip__dot"></span>
+            <span>Registration open</span>
+          </div>
+          <div class="wa-chip wa-chip--in-2">
+            <span class="wa-chip__dot"></span>
+            <span>Match schedule</span>
+          </div>
+          <div class="wa-chip wa-chip--in-3">
+            <span class="wa-chip__dot"></span>
+            <span>Results published</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer__top">
+      <div>
+        <a href="index.html" class="brand" aria-label="ES Trainers home">
+          <img src="assets/logo/logo.png" alt="" class="brand__mark" width="34" height="34">
+          <span class="brand__name">ES Trainers</span>
+        </a>
+        <p class="footer__desc">A tournament platform for competitive BGMI and FF MAX players.</p>
+      </div>
+
+      <div class="footer__col">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="bgmi.html">BGMI</a></li>
+          <li><a href="ffmax.html">FF MAX</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h4>Community</h4>
+        <ul>
+          <li><a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" rel="noopener noreferrer">WhatsApp Community</a></li>
+          <li><a href="https://www.instagram.com/es_trainers/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+          <li><a href="mailto:esportstraning@gmail.com">esportstraning@gmail.com</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <span>© ES Trainers. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="about.js"></script>
+</body>
