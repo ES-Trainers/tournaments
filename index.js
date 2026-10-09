@@ -347,6 +347,8 @@ function patchCard(el, view) {
   const statusEl = field("status");
   setHidden(statusEl, !view.status);
   setClass(statusEl, "tcard__status--live", view.statusKey === "live");
+  setClass(statusEl, "tcard__status--open", view.statusKey === "registration_open");
+  setClass(statusEl, "tcard__status--upcoming", view.statusKey === "upcoming");
 
   const cta = field("cta");
   if (cta) {
