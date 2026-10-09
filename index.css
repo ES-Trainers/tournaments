@@ -259,6 +259,9 @@ p { margin: 0; }
   transition: width var(--transition);
 }
 .nav__links a:hover::after { width: 100%; }
+/* Current page: visible without hover. Hover keeps its own colour change. */
+.nav__links a[aria-current="page"] { color: var(--ink); }
+.nav__links a[aria-current="page"]::after { width: 100%; }
 
 .nav__actions { display: flex; align-items: center; gap: var(--space-3); }
 .nav__actions .btn--primary { display: none; padding: 0.65rem 1.3rem; min-height: 42px; }
@@ -318,6 +321,7 @@ p { margin: 0; }
   padding: var(--space-2) 0;
   border-bottom: 1px solid var(--line);
 }
+.mobile-menu__links a[aria-current="page"] { color: var(--blue); }
 
 /* ==========================================================
    HERO
@@ -609,71 +613,172 @@ p { margin: 0; }
   gap: var(--space-4);
 }
 
+/* Card accent: BGMI green / FF MAX orange. --tc is the accent, --tc-strong a
+   darker shade used behind white text, --tc-tint a soft wash for the header. */
 .tcard {
-  background: var(--white);
+  --tc: var(--bgmi);
+  --tc-strong: #1a5e4e;
+  --tc-tint: rgba(31, 110, 92, 0.1);
+  --tc-glow: rgba(31, 110, 92, 0.22);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, var(--tc-tint) 0%, rgba(255,255,255,0) 150px),
+    var(--white);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   padding: var(--space-5);
   box-shadow: var(--shadow-sm);
   transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
 }
-.tcard:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); border-color: #c9d3e6; }
+.tcard--ffmax {
+  --tc: var(--ffmax);
+  --tc-strong: #c4431a;
+  --tc-tint: rgba(230, 87, 43, 0.1);
+  --tc-glow: rgba(230, 87, 43, 0.24);
+}
+.tcard::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--tc), var(--tc-strong));
+}
+.tcard:hover {
+  transform: translateY(-4px);
+  border-color: var(--tc);
+  box-shadow: var(--shadow-md), 0 14px 34px var(--tc-glow);
+}
 
-.tcard--bgmi { border-top: 3px solid var(--bgmi); }
-.tcard--ffmax { border-top: 3px solid var(--ffmax); }
-
-.tcard__top { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3); }
+.tcard__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
 
 .tcard__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
-  color: var(--blue-deep);
-  background: var(--blue-wash);
-  padding: 0.25rem 0.6rem;
-  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  color: var(--tc-strong);
+  background: var(--white);
+  border: 1px solid var(--tc);
+  padding: 0.28rem 0.7rem 0.28rem 0.6rem;
+  border-radius: 999px;
+}
+.tcard__badge::before {
+  content: "";
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--tc);
 }
 
 .tcard__status {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--success);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--ink-soft);
+  background: var(--surface-alt);
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
   text-transform: capitalize;
+  white-space: nowrap;
 }
-
+.tcard__status::before {
+  content: "";
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.tcard__status[hidden] { display: none; }
+.tcard__status--open { color: #146c39; background: #e3f6ea; }
+.tcard__status--upcoming { color: var(--blue-deep); background: var(--blue-wash); }
 .tcard__status--live {
   color: #c2122b;
   background: #ffe9ec;
-  border-radius: 999px;
-  padding: 0.16rem 0.6rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   font-size: 0.72rem;
-  font-weight: 700;
+}
+.tcard__status--live::before { animation: livePulse 2.4s ease-out infinite; }
+
+.tcard__title {
+  font-size: clamp(1.3rem, 2.6vw, 1.6rem);
+  line-height: 1.2;
+  margin-bottom: var(--space-4);
+  overflow-wrap: anywhere;
 }
 
-.tcard__title { font-size: 1.25rem; margin-bottom: var(--space-3); }
-
-.tcard__meta { display: grid; gap: var(--space-2); margin: 0 0 var(--space-4); }
-.tcard__meta > div { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
-.tcard__meta dt { display: flex; align-items: center; gap: 0.4rem; color: var(--ink-faint); font-size: 0.85rem; }
-.tcard__meta dt svg { width: 14px; height: 14px; flex-shrink: 0; }
-.tcard__meta dd { margin: 0; font-weight: 600; font-size: 0.92rem; }
+.tcard__meta {
+  display: grid;
+  margin: 0 0 var(--space-5);
+  padding: var(--space-1) var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.tcard__meta > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0.7rem 0;
+}
+.tcard__meta > div + div { border-top: 1px solid var(--line); }
+/* display:flex above would otherwise beat the [hidden] attribute, so a row
+   with no value in Firebase would show up empty. */
+.tcard__meta > div[hidden] { display: none; }
+.tcard__meta dt { display: flex; align-items: center; gap: 0.45rem; color: var(--ink-soft); font-size: 0.85rem; flex-shrink: 0; }
+.tcard__meta dt svg { width: 15px; height: 15px; flex-shrink: 0; color: var(--tc); }
+.tcard__meta dd { margin: 0; font-weight: 600; font-size: 0.94rem; text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.tcard__meta [data-row="prize"] dd {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--tc-strong);
+}
 
 .tcard__cta {
   display: block;
+  margin-top: auto;
   text-align: center;
-  padding: 0.7rem;
+  padding: 0.85rem 1rem;
   border-radius: var(--radius-sm);
-  background: var(--surface-alt);
-  font-weight: 600;
-  font-size: 0.92rem;
+  background: linear-gradient(180deg, var(--tc), var(--tc-strong));
+  color: var(--white);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.98rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 22px var(--tc-glow);
+  transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
 }
+.tcard__cta:hover { transform: translateY(-2px); box-shadow: 0 14px 30px var(--tc-glow); filter: brightness(1.06); }
+.tcard__cta:active { transform: translateY(0); }
+.tcard__cta:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 /* display:block above would otherwise beat the [hidden] attribute, so a
    non-open tournament would show a dead "Register Now". Keeps a non-open
    tournament from showing a dead button. */
 .tcard__cta[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tcard:hover, .tcard__cta:hover { transform: none; }
+  .tcard__status--live::before { animation: none; }
+}
 
 .tempty {
   grid-column: 1 / -1;
