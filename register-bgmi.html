@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BGMI Team Registration | ES Trainers</title>
+<meta name="description" content="Register your squad for an ES Trainers BGMI tournament.">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://estrainers.in/register-bgmi.html">
+
+<link rel="icon" type="image/png" sizes="32x32" href="assets/logo/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/logo/favicon-192.png">
+<link rel="apple-touch-icon" href="assets/logo/apple-touch-icon.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="register-bgmi.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+
+<!-- ==========================================================
+     NAVBAR
+     ========================================================== -->
+<header class="nav" id="site-nav">
+  <div class="container nav__inner">
+    <a href="index.html" class="brand" aria-label="ES Trainers home">
+      <img src="assets/logo/logo.png" alt="" class="brand__mark" width="34" height="34">
+      <span class="brand__name">ES Trainers</span>
+    </a>
+
+    <nav class="nav__links" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="bgmi.html">BGMI</a>
+      <a href="ffmax.html">FF MAX</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+
+    <div class="nav__actions">
+      <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" rel="noopener noreferrer" class="btn btn--primary">
+        Join Community
+      </a>
+      <button class="nav__toggle" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile menu -->
+<div class="mobile-menu" id="mobile-menu">
+  <div class="mobile-menu__panel">
+    <nav class="mobile-menu__links" aria-label="Mobile primary">
+      <a href="index.html">Home</a>
+      <a href="bgmi.html">BGMI</a>
+      <a href="ffmax.html">FF MAX</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" rel="noopener noreferrer" class="btn btn--primary">
+      Join Community
+    </a>
+  </div>
+</div>
+
+<main id="main">
+
+<section class="rhero" aria-labelledby="page-title">
+  <div class="container">
+    <a class="rhero__back" href="bgmi.html#tournaments">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      All BGMI tournaments
+    </a>
+    <h1 id="page-title">BGMI Team Registration</h1>
+    <p class="rhero__sub" id="hero-sub" aria-live="polite">Loading tournament…</p>
+  </div>
+</section>
+
+<section class="rmain">
+  <div class="container">
+
+    <div class="state" id="state-panel" role="status" hidden>
+      <h2 id="state-title"></h2>
+      <p id="state-text"></p>
+      <a class="btn btn--bgmi" id="state-action" href="bgmi.html#tournaments">View tournaments</a>
+    </div>
+
+    <div class="rgrid" id="reg-grid">
+
+      <aside class="rsum" id="summary" aria-labelledby="sum-title">
+        <div class="rsum__top">
+          <span class="rsum__game">BGMI</span>
+          <span class="pill" id="sum-status" hidden></span>
+        </div>
+        <h2 id="sum-title"><span class="rsum__loading">Loading tournament…</span></h2>
+        <dl class="rsum__rows">
+          <div data-row="date" hidden><dt>Date &amp; time</dt><dd id="sum-date"></dd></div>
+          <div data-row="match" hidden><dt>Match</dt><dd id="sum-match"></dd></div>
+          <div data-row="fee" hidden><dt>Entry fee</dt><dd id="sum-fee"></dd></div>
+          <div data-row="prize" hidden><dt>Prize pool</dt><dd id="sum-prize"></dd></div>
+          <div data-row="slots" hidden><dt>Teams</dt><dd id="sum-slots"></dd></div>
+        </dl>
+        <div class="cap" id="sum-cap" hidden>
+          <div class="cap__track"><span class="cap__bar" id="sum-cap-bar"></span></div>
+          <p class="cap__text" id="sum-cap-text"></p>
+        </div>
+      </aside>
+
+      <div class="rcol" id="form-col" hidden>
+
+        <div class="notice notice--info" id="info-notice">
+          <h3>Online submission is not live yet</h3>
+          <p>You can fill in and check your squad details here, but this page does not save your entry or take payment yet. Nothing you enter is sent anywhere.</p>
+        </div>
+
+        <div class="notice" id="status-banner" role="status" hidden>
+          <h3 id="banner-title"></h3>
+          <div id="banner-body"></div>
+        </div>
+
+        <form class="rform" id="reg-form" novalidate>
+          <div class="notice notice--error" id="error-summary" role="alert" tabindex="-1" hidden>
+            <h3>Please fix the following</h3>
+            <ul id="error-list"></ul>
+          </div>
+
+          <fieldset id="form-fields" class="rreset">
+<fieldset class="rset"><legend>Team details</legend>
+<div class="fgrid"><div class="field field--wide"><label for="team-name">Team name</label><input id="team-name" name="team-name" type="text" aria-describedby="team-name-hint team-name-error" maxlength="30" autocomplete="off" required><p class="field__hint" id="team-name-hint">3 to 30 characters. Must be unique in this tournament.</p><p class="field__error" id="team-name-error"></p></div></div></fieldset>
+<fieldset class="rset"><legend>Player 1 — Team Leader</legend>
+<p class="rset__note">Email and phone of the leader are the only contact details we use.</p>
+<div class="fgrid"><div class="field"><label for="p1-name">Player name</label><input id="p1-name" name="p1-name" type="text" aria-describedby="p1-name-error" maxlength="40" autocomplete="name" required><p class="field__error" id="p1-name-error"></p></div>
+<div class="field"><label for="p1-ign">BGMI profile name</label><input id="p1-ign" name="p1-ign" type="text" aria-describedby="p1-ign-error" maxlength="30" autocomplete="off" required><p class="field__error" id="p1-ign-error"></p></div>
+<div class="field"><label for="p1-uid">BGMI UID / Character ID</label><input id="p1-uid" name="p1-uid" type="text" aria-describedby="p1-uid-hint p1-uid-error" inputmode="numeric" maxlength="12" autocomplete="off" required><p class="field__hint" id="p1-uid-hint">Numbers only, found in your BGMI profile.</p><p class="field__error" id="p1-uid-error"></p></div>
+<div class="field"><label for="p1-gender">Gender</label><select id="p1-gender" name="p1-gender" required aria-describedby="p1-gender-error"><option value="">Select gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select><p class="field__error" id="p1-gender-error"></p></div>
+<div class="field"><label for="p1-email">Email address</label><input id="p1-email" name="p1-email" type="email" aria-describedby="p1-email-hint p1-email-error" maxlength="120" autocomplete="email" required><p class="field__hint" id="p1-email-hint">Primary contact for your team.</p><p class="field__error" id="p1-email-error"></p></div>
+<div class="field"><label for="p1-phone">Phone number</label><input id="p1-phone" name="p1-phone" type="tel" aria-describedby="p1-phone-hint p1-phone-error" maxlength="16" inputmode="tel" autocomplete="tel" required><p class="field__hint" id="p1-phone-hint">10-digit Indian mobile number.</p><p class="field__error" id="p1-phone-error"></p></div></div></fieldset>
+<fieldset class="rset"><legend>Player 2</legend><div class="fgrid"><div class="field"><label for="p2-name">Player name</label><input id="p2-name" name="p2-name" type="text" aria-describedby="p2-name-error" maxlength="40" autocomplete="off" required><p class="field__error" id="p2-name-error"></p></div>
+<div class="field"><label for="p2-ign">BGMI profile name</label><input id="p2-ign" name="p2-ign" type="text" aria-describedby="p2-ign-error" maxlength="30" autocomplete="off" required><p class="field__error" id="p2-ign-error"></p></div>
+<div class="field"><label for="p2-uid">BGMI UID / Character ID</label><input id="p2-uid" name="p2-uid" type="text" aria-describedby="p2-uid-hint p2-uid-error" inputmode="numeric" maxlength="12" autocomplete="off" required><p class="field__hint" id="p2-uid-hint">Numbers only, found in your BGMI profile.</p><p class="field__error" id="p2-uid-error"></p></div>
+<div class="field"><label for="p2-gender">Gender</label><select id="p2-gender" name="p2-gender" required aria-describedby="p2-gender-error"><option value="">Select gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select><p class="field__error" id="p2-gender-error"></p></div></div></fieldset>
+<fieldset class="rset"><legend>Player 3</legend><div class="fgrid"><div class="field"><label for="p3-name">Player name</label><input id="p3-name" name="p3-name" type="text" aria-describedby="p3-name-error" maxlength="40" autocomplete="off" required><p class="field__error" id="p3-name-error"></p></div>
+<div class="field"><label for="p3-ign">BGMI profile name</label><input id="p3-ign" name="p3-ign" type="text" aria-describedby="p3-ign-error" maxlength="30" autocomplete="off" required><p class="field__error" id="p3-ign-error"></p></div>
+<div class="field"><label for="p3-uid">BGMI UID / Character ID</label><input id="p3-uid" name="p3-uid" type="text" aria-describedby="p3-uid-hint p3-uid-error" inputmode="numeric" maxlength="12" autocomplete="off" required><p class="field__hint" id="p3-uid-hint">Numbers only, found in your BGMI profile.</p><p class="field__error" id="p3-uid-error"></p></div>
+<div class="field"><label for="p3-gender">Gender</label><select id="p3-gender" name="p3-gender" required aria-describedby="p3-gender-error"><option value="">Select gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select><p class="field__error" id="p3-gender-error"></p></div></div></fieldset>
+<fieldset class="rset"><legend>Player 4</legend><div class="fgrid"><div class="field"><label for="p4-name">Player name</label><input id="p4-name" name="p4-name" type="text" aria-describedby="p4-name-error" maxlength="40" autocomplete="off" required><p class="field__error" id="p4-name-error"></p></div>
+<div class="field"><label for="p4-ign">BGMI profile name</label><input id="p4-ign" name="p4-ign" type="text" aria-describedby="p4-ign-error" maxlength="30" autocomplete="off" required><p class="field__error" id="p4-ign-error"></p></div>
+<div class="field"><label for="p4-uid">BGMI UID / Character ID</label><input id="p4-uid" name="p4-uid" type="text" aria-describedby="p4-uid-hint p4-uid-error" inputmode="numeric" maxlength="12" autocomplete="off" required><p class="field__hint" id="p4-uid-hint">Numbers only, found in your BGMI profile.</p><p class="field__error" id="p4-uid-error"></p></div>
+<div class="field"><label for="p4-gender">Gender</label><select id="p4-gender" name="p4-gender" required aria-describedby="p4-gender-error"><option value="">Select gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select><p class="field__error" id="p4-gender-error"></p></div></div></fieldset>
+<fieldset class="rset rset--opt"><legend>Player 5 — Substitute (optional)</legend>
+<p class="rset__note">Optional. Included in the same team entry fee. If you add a substitute, fill every field.</p>
+<div class="fgrid"><div class="field"><label for="p5-name">Player name</label><input id="p5-name" name="p5-name" type="text" aria-describedby="p5-name-error" maxlength="40" autocomplete="off"><p class="field__error" id="p5-name-error"></p></div>
+<div class="field"><label for="p5-ign">BGMI profile name</label><input id="p5-ign" name="p5-ign" type="text" aria-describedby="p5-ign-error" maxlength="30" autocomplete="off"><p class="field__error" id="p5-ign-error"></p></div>
+<div class="field"><label for="p5-uid">BGMI UID / Character ID</label><input id="p5-uid" name="p5-uid" type="text" aria-describedby="p5-uid-hint p5-uid-error" inputmode="numeric" maxlength="12" autocomplete="off"><p class="field__hint" id="p5-uid-hint">Numbers only, found in your BGMI profile.</p><p class="field__error" id="p5-uid-error"></p></div>
+<div class="field"><label for="p5-gender">Gender</label><select id="p5-gender" name="p5-gender" aria-describedby="p5-gender-error"><option value="">Select gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select><p class="field__error" id="p5-gender-error"></p></div></div></fieldset>
+          </fieldset>
+
+          <fieldset class="rset">
+            <legend>Rules &amp; Terms</legend>
+            <div class="rules-box">
+              <div class="rules-box__text">
+                <p class="rset__note rset__note--flush">Read the tournament rules and accept them before you continue.</p>
+                <p class="rules-box__status" id="rules-status" aria-live="polite">Not accepted yet.</p>
+              </div>
+              <button type="button" class="btn btn--ghost" id="open-rules">Read Rules &amp; Terms</button>
+            </div>
+          </fieldset>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn--bgmi" id="review-btn">Review my entry</button>
+            <p class="field__hint">Reviewing does not submit or pay for anything.</p>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- Rules &amp; Terms: full-screen panel on this page -->
+<dialog class="panel" id="rules-dialog" aria-labelledby="rules-title">
+  <div class="panel__bar">
+    <h2 id="rules-title">Rules &amp; Terms</h2>
+    <button type="button" class="btn btn--ghost" data-close="rules-dialog">Close</button>
+  </div>
+  <div class="panel__body"><div class="panel__inner rules" id="rules-content"></div></div>
+  <div class="panel__foot">
+    <button type="button" class="btn btn--ghost" data-close="rules-dialog">Close</button>
+    <button type="button" class="btn btn--bgmi" id="accept-rules">I accept the Rules &amp; Terms</button>
+  </div>
+</dialog>
+
+<!-- Review: full-screen panel on this page -->
+<dialog class="panel" id="review-dialog" aria-labelledby="review-title">
+  <div class="panel__bar">
+    <h2 id="review-title">Review your entry</h2>
+    <button type="button" class="btn btn--ghost" data-close="review-dialog">Close</button>
+  </div>
+  <div class="panel__body"><div class="panel__inner">
+    <div class="notice notice--warn" id="submit-notice">
+      <h3>Not submitted yet</h3>
+      <p>Your details will be sent to ES Trainers for manual review. Payment is not collected on this page. Your team is not confirmed until an admin verifies the entry and payment.</p>
+    </div>
+    <div class="rev" id="review-content"></div>
+  </div></div>
+  <div class="panel__foot">
+    <button type="button" class="btn btn--ghost" data-close="review-dialog">Back to editing</button>
+    <button type="button" class="btn btn--bgmi" id="submit-registration">Submit registration</button>
+  </div>
+</dialog>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__top">
+      <div>
+        <a href="index.html" class="brand" aria-label="ES Trainers home">
+          <img src="assets/logo/logo.png" alt="" class="brand__mark" width="34" height="34">
+          <span class="brand__name">ES Trainers</span>
+        </a>
+        <p class="footer__desc">A tournament platform for competitive BGMI and FF MAX players.</p>
+      </div>
+
+      <div class="footer__col">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="bgmi.html">BGMI</a></li>
+          <li><a href="ffmax.html">FF MAX</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="contact.html">Contact</a></li>
+        </ul>
+      </div>
+
+      <div class="footer__col">
+        <h4>Community</h4>
+        <ul>
+          <li><a href="https://chat.whatsapp.com/LsbpYeU4OJ5CWVYsqDN5Es" target="_blank" rel="noopener noreferrer">WhatsApp Community</a></li>
+          <li><a href="https://www.instagram.com/es_trainers/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+          <li><a href="mailto:esportstraning@gmail.com">esportstraning@gmail.com</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer__bottom">
+      <span>© ES Trainers. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
+<script type="module" src="register-bgmi.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9FHBM1T0L1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-9FHBM1T0L1');
+</script>
+</body>
+</html>
