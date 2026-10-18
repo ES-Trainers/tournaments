@@ -50,7 +50,7 @@ const BGMI_FIREBASE = {
 // eslint-disable-next-line no-unused-vars
 const RAZORPAY_TEST_KEY_ID = "rzp_test_TowNZAlqCUBcK2";
 
-const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbzhDA4lblwTlkNouCr1mL9piBe2g3PT4VzpxSDmm8M30v7yeOv9bdbIh3-TJikH3z8z/exec";
+const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbw4DAaM-e6brrLv9J4BI3AVEdDiN5GRps9yXo2RHEX9NsB48UykzQyh-8XusIqQ_vxL/exec";
 
 
 /* ---- 2. Small helpers ---- */
