@@ -8,20 +8,23 @@
    - Shows the tournament, checks whether registration is open,
      validates the squad form, shows Rules & Terms, and lets the
      player review their entry.
+   - Check Availability: reads tournaments/<id>/teamNames/<sha256 key>.
+   - Verify Account: Firebase Google sign-in, then reads
+     tournaments/<id>/leaderEmails/<sha256 key>.
+   - Verify Team: re-runs every check fresh (see section 13).
+   - Pay: asks the Apps Script backend for a Razorpay order, opens
+     Razorpay Checkout, then sends the payment result back so the
+     backend can verify the signature and save the registration.
 
-   What this file deliberately does NOT do (see the report):
-   - It does not write to Firestore. The Firestore rules in the
-     project make registrations/teamNames server-only, so a
-     browser write would be rejected.
-   - It does not open Razorpay Checkout. Razorpay needs an order
-     created and a payment signature verified on a trusted server,
-     and this project has none. Never put the Key Secret here.
-   - It does not check team-name / email availability, because
-     the browser has no permission to read those reservations.
+   What this file deliberately does NOT do:
+   - It never writes registrations or payment status to Firestore.
+     Only the Apps Script backend does, after verifying payment.
+   - It never holds a Razorpay secret (only the public Key ID).
    ========================================================== */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-auth.js";
 
 /* ---- 1. Config (same values as bgmi.js) ---- */
 
@@ -45,9 +48,7 @@ const BGMI_FIREBASE = {
 };
 
 /* Razorpay TEST Key ID (public by design, never the secret).
-   Kept here only so it is ready for the day a trusted server can
-   create orders. It is intentionally NOT used: no checkout is opened. */
-// eslint-disable-next-line no-unused-vars
+   Used as a fallback only; the backend returns the key it created the order with. */
 const RAZORPAY_TEST_KEY_ID = "rzp_test_TowNZAlqCUBcK2";
 
 const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbwGed_Zbqa_zi1l8KmvoQBlvOsmYd03e_YM-Fr04yBGa0rygRH9tRnxyOyIHMPJBTYO/exec";
@@ -101,6 +102,13 @@ function readTournamentId() {
   return id;
 }
 
+/* Display only. The backend decides the real amount from the tournament document. */
+function parseFeeInr(value) {
+  const m = String(value ?? "").replace(/,/g, "").match(/\d+(\.\d+)?/);
+  const n = m ? Number(m[0]) : 0;
+  return n > 0 ? n : null;
+}
+
 function normalizeTournament(data) {
   const text = (v) => (typeof v === "string" && v.trim() ? v.trim() : typeof v === "number" ? String(v) : null);
   let rules = data.rules;
@@ -111,6 +119,7 @@ function normalizeTournament(data) {
     date: formatDate(data.date),
     match: text(data.match),
     fee: money(data.entryFee),
+    feeInr: parseFeeInr(data.entryFee),
     prize: money(data.prizePool),
     status: text(data.status),
     max: toCount(data.maxTeams),
@@ -142,6 +151,7 @@ function getEligibility(t) {
 
 const app = initializeApp(BGMI_FIREBASE.config, BGMI_FIREBASE.appName);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
 /* ---- 4. Elements and state ---- */
 
@@ -176,6 +186,21 @@ const el = {
   reviewContent: byId("review-content"),
   submitRegistration: byId("submit-registration"),
   submitNotice: byId("submit-notice"),
+  checkNameBtn: byId("check-name-btn"),
+  nameMsg: byId("team-name-check-msg"),
+  verifyAccountBtn: byId("verify-account-btn"),
+  verifyAccountLabel: byId("verify-account-label"),
+  accountMsg: byId("account-msg"),
+  verifyTeamBtn: byId("verify-team-btn"),
+  formActions: byId("form-actions"),
+  verifyIssues: byId("verify-issues"),
+  verifyIssuesList: byId("verify-issues-list"),
+  payBox: byId("pay-box"),
+  payBtn: byId("pay-btn"),
+  payMsg: byId("pay-msg"),
+  successBox: byId("success-box"),
+  successId: byId("success-id"),
+  successPayment: byId("success-payment"),
 };
 
 const state = {
@@ -284,11 +309,10 @@ function renderTournament(data) {
   renderCapacity(t);
   renderBanner(t, eligibility);
 
-  const locked = !eligibility.open;
-  if (el.fields.disabled !== locked) el.fields.disabled = locked;
-  [el.reviewBtn, el.openRules].forEach((b) => { if (b.disabled !== locked) b.disabled = locked; });
-
   renderRules(t);
+  applyLock();
+  renderPayButton();
+  if (!eligibility.open && !vs.pay.pending && !vs.pay.done) invalidateTeamVerification();
 }
 
 /* ---- 7. Rules & Terms ---- */
@@ -298,6 +322,7 @@ function renderRules(t) {
   /* Rules changed (or first load): any earlier acceptance no longer applies. */
   state.rulesTextShown = t.rules;
   state.rulesAccepted = false;
+  invalidateTeamVerification();
   updateRulesStatus();
 
   const box = el.rulesContent;
@@ -323,7 +348,7 @@ function updateRulesStatus() {
   node.className = "rules-box__status";
   if (state.rulesAccepted) {
     node.classList.add("rules-box__status--ok");
-    setText(node, "Accepted on this page. (Not recorded anywhere yet.)");
+    setText(node, "Accepted. It is saved with your registration after payment.");
   } else if (missing) {
     node.classList.add("rules-box__status--bad");
     setText(node, "Rules are not published for this tournament yet.");
@@ -495,10 +520,10 @@ function buildReview() {
     addBlock(box, n === 1 ? "Player 1 — Team Leader" : n === 5 ? "Player 5 — Substitute" : `Player ${n}`, rows);
   });
   addBlock(box, "Status", [
-    ["Rules & Terms", "Accepted on this page only"],
-    ["Team name / email check", "Checked by ES Trainers when submitted"],
-    ["Payment", "Manual admin verification"],
-    ["Registration", "Pending admin review"],
+    ["Rules & Terms", "Accepted"],
+    ["Team name / email check", "Done when you click Verify Team"],
+    ["Payment", "Online, after Verify Team"],
+    ["Registration", "Pending admin review after payment"],
   ]);
 }
 
@@ -552,11 +577,16 @@ function onFieldInput(event) {
 
 function initDialogs() {
   el.openRules.addEventListener("click", () => el.rulesDialog.showModal());
-  el.submitRegistration.addEventListener("click", submitRegistration);
+  el.submitRegistration.addEventListener("click", () => {
+    el.reviewDialog.close();
+    el.verifyTeamBtn.scrollIntoView({ block: "center", behavior: "smooth" });
+    el.verifyTeamBtn.focus({ preventScroll: true });
+  });
   el.acceptRules.addEventListener("click", () => {
     if (!state.tournament || !state.tournament.rules) return;
     state.rulesAccepted = true;
     updateRulesStatus();
+    invalidateTeamVerification();
     el.rulesDialog.close();
   });
   document.querySelectorAll("[data-close]").forEach((btn) => {
@@ -569,66 +599,14 @@ function initForm() {
   el.form.addEventListener("focusout", onFieldBlur);
   el.form.addEventListener("input", onFieldInput);
   el.form.addEventListener("change", onFieldInput);
+  el.form.addEventListener("input", onRegistrationChanged);
+  el.form.addEventListener("change", onRegistrationChanged);
+  el.checkNameBtn.addEventListener("click", onCheckName);
+  el.verifyAccountBtn.addEventListener("click", onVerifyAccount);
+  el.verifyTeamBtn.addEventListener("click", onVerifyTeam);
+  el.payBtn.addEventListener("click", onPay);
 }
 
-
-function collectRegistration() {
-  const players = [];
-  PLAYERS.forEach((n) => {
-    if (n === 5 && !playerFilled(5)) return;
-    const p = `p${n}`;
-    players.push({
-      number: n,
-      name: val(`${p}-name`),
-      ign: val(`${p}-ign`),
-      uid: val(`${p}-uid`),
-      gender: val(`${p}-gender`),
-    });
-  });
-  return {
-    action: "submitRegistration",
-    tournamentId: readTournamentId(),
-    teamName: val("team-name"),
-    leaderEmail: val("p1-email").toLowerCase(),
-    leaderPhone: normalizePhone(val("p1-phone")),
-    players,
-    rulesAccepted: state.rulesAccepted,
-    rulesText: state.tournament?.rules || "",
-    submittedAt: new Date().toISOString(),
-  };
-}
-
-function submitRegistration() {
-  if (!state.eligibility?.open || !state.rulesAccepted || !state.tournament?.rules) return;
-  if (!PAYMENT_BACKEND_URL || !/^https:\/\/script\.google\.com\/macros\/s\//.test(PAYMENT_BACKEND_URL)) {
-    setText(el.submitNotice.querySelector("h3"), "Submission is not configured");
-    setText(el.submitNotice.querySelector("p"), "Please contact ES Trainers on WhatsApp. No registration was sent.");
-    return;
-  }
-  const payload = collectRegistration();
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = PAYMENT_BACKEND_URL;
-  form.target = "_blank";
-  form.acceptCharset = "UTF-8";
-  form.hidden = true;
-  const input = document.createElement("input");
-  input.type = "hidden";
-  input.name = "payload";
-  input.value = JSON.stringify(payload);
-  form.appendChild(input);
-  document.body.appendChild(form);
-  el.submitRegistration.disabled = true;
-  setText(el.submitRegistration, "Opening secure submission…");
-  form.submit();
-  setText(el.submitNotice.querySelector("h3"), "Submission opened in a new tab");
-  setText(el.submitNotice.querySelector("p"), "Check the new tab for the server response. Your team is not confirmed until an admin reviews the entry and verifies payment.");
-  setTimeout(() => form.remove(), 1000);
-  setTimeout(() => {
-    el.submitRegistration.disabled = false;
-    setText(el.submitRegistration, "Submit registration again");
-  }, 2500);
-}
 
 /* ---- 11. Navbar + mobile menu (same behaviour as bgmi.js) ---- */
 
@@ -668,6 +646,540 @@ function initMobileMenu() {
     if (event.key === "Escape" && menu.classList.contains("mobile-menu--open")) close();
   });
 }
+
+/* ---- 13. Team-name check, Google verification, Verify Team, payment ---- */
+
+/* All new UI state lives here. Nothing in it is trusted by the server:
+   the backend re-verifies identity, duplicates, fee and payment itself. */
+const vs = {
+  name: { checked: null, available: null },           // normalized name last checked / found available
+  acct: { verifiedEmail: null, registered: null, busy: false },
+  team: { fingerprint: null, verified: false, busy: false },
+  pay: { busy: false, pending: null, snapshot: null, done: false, failure: "" },
+};
+
+class UserFacingError extends Error {}
+
+const normTeam = (name) => collapse(name).toLowerCase();
+const normEmail = (email) => String(email || "").toLowerCase().trim();
+
+function setMsg(node, text, tone) {
+  setText(node, text || "");
+  const cls = "vmsg" + (tone ? ` vmsg--${tone}` : "");
+  if (node.className !== cls) node.className = cls;
+}
+
+/* Same key the backend uses: SHA-256 hex of the normalized value. */
+async function sha256Hex(text) {
+  if (!window.crypto || !window.crypto.subtle) throw new Error("Secure context required");
+  const buf = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/* Single-document lookups only (no queries, no listing). */
+async function reservationExists(collectionName, normalizedValue) {
+  const key = await sha256Hex(normalizedValue);
+  const snap = await getDoc(doc(db, CONFIG.collectionName, readTournamentId(), collectionName, key));
+  return snap.exists();
+}
+const isTeamNameTaken = (name) => reservationExists("teamNames", normTeam(name));
+const isEmailRegistered = (email) => reservationExists("leaderEmails", normEmail(email));
+
+async function fetchFreshTournament() {
+  const snap = await getDoc(doc(db, CONFIG.collectionName, readTournamentId()));
+  if (!snap.exists()) {
+    return { t: null, eligibility: { open: false, title: "Tournament not found", message: "This tournament could not be found." } };
+  }
+  const t = normalizeTournament(snap.data() || {});
+  return { t, eligibility: getEligibility(t) };
+}
+
+/* ---- Snapshot of everything Verify Team vouches for ---- */
+
+function registrationSnapshot() {
+  const players = [];
+  PLAYERS.forEach((n) => {
+    if (n === 5 && !playerFilled(5)) return;
+    const p = `p${n}`;
+    players.push({ number: n, name: val(`${p}-name`), ign: val(`${p}-ign`), uid: val(`${p}-uid`), gender: val(`${p}-gender`) });
+  });
+  return {
+    teamName: val("team-name"),
+    leaderEmail: normEmail(val("p1-email")),
+    leaderPhone: normalizePhone(val("p1-phone")),
+    players,
+    rulesAccepted: state.rulesAccepted,
+  };
+}
+const fingerprint = () => JSON.stringify([registrationSnapshot(), vs.acct.verifiedEmail]);
+
+/* ---- Feature 1: Check Availability ---- */
+
+function resetNameCheck() {
+  vs.name = { checked: null, available: null };
+  el.checkNameBtn.classList.remove("is-ok");
+  el.checkNameBtn.disabled = false;
+  setText(el.checkNameBtn, "Check Availability");
+  setMsg(el.nameMsg, "");
+}
+
+async function onCheckName() {
+  if (!state.eligibility || !state.eligibility.open) return;
+  const name = val("team-name");
+  const problem = validateAll()["team-name"];
+  if (problem) {
+    showFieldError("team-name", problem);
+    byId("team-name").focus();
+    return;
+  }
+  showFieldError("team-name", "");
+  const normalized = normTeam(name);
+  vs.name = { checked: normalized, available: null };
+  el.checkNameBtn.classList.remove("is-ok");
+  el.checkNameBtn.disabled = true;
+  setText(el.checkNameBtn, "Checking…");
+  setMsg(el.nameMsg, "");
+  try {
+    const taken = await isTeamNameTaken(name);
+    if (normTeam(val("team-name")) !== normalized) return; /* edited meanwhile: result is stale */
+    el.checkNameBtn.disabled = false;
+    if (taken) {
+      setText(el.checkNameBtn, "Check Availability");
+      setMsg(el.nameMsg, "This team name is already registered in this tournament. Please choose a different name.", "bad");
+    } else {
+      vs.name.available = normalized;
+      el.checkNameBtn.classList.add("is-ok");
+      setText(el.checkNameBtn, "Available");
+      setMsg(el.nameMsg, "This team name is available.", "ok");
+    }
+  } catch (err) {
+    console.error("Team name check failed", err);
+    if (normTeam(val("team-name")) !== normalized) return;
+    vs.name = { checked: null, available: null };
+    el.checkNameBtn.disabled = false;
+    setText(el.checkNameBtn, "Check Availability");
+    setMsg(el.nameMsg, "Could not check the team name. Check your connection and try again.", "bad");
+  }
+}
+
+/* ---- Feature 2: Verify Account (Firebase Google sign-in) ---- */
+
+function renderAccount() {
+  const a = vs.acct;
+  const ok = !!a.verifiedEmail;
+  el.verifyAccountBtn.classList.toggle("is-ok", ok);
+  if (el.verifyAccountBtn.disabled !== a.busy) el.verifyAccountBtn.disabled = a.busy;
+  setText(el.verifyAccountLabel, a.busy ? "Opening Google…" : ok ? (a.registered ? "Verified" : "Account Verified") : "Verify Account");
+  if (ok) setMsg(el.accountMsg, a.registered ? "Email is already registered" : "Email is available to registration", a.registered ? "bad" : "ok");
+}
+
+function resetAccount() {
+  vs.acct = { verifiedEmail: null, registered: null, busy: vs.acct.busy };
+  setMsg(el.accountMsg, "");
+  renderAccount();
+}
+
+function authErrorMessage(err) {
+  switch (err && err.code) {
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "Google sign-in was cancelled. Click Verify Account to try again.";
+    case "auth/popup-blocked":
+      return "Your browser blocked the Google sign-in window. Allow pop-ups for this site and try again.";
+    case "auth/network-request-failed":
+      return "Network problem during Google sign-in. Check your connection and try again.";
+    case "auth/unauthorized-domain":
+      return "Google sign-in is not enabled for this website address yet. Please contact ES Trainers.";
+    case "auth/operation-not-allowed":
+      return "Google sign-in is not turned on yet. Please contact ES Trainers.";
+    case "auth/user-disabled":
+      return "This Google account has been disabled. Please contact ES Trainers.";
+    case "auth/too-many-requests":
+      return "Too many attempts. Please wait a minute and try again.";
+    default:
+      return "Google sign-in failed. Please try again.";
+  }
+}
+
+async function onVerifyAccount() {
+  if (vs.acct.busy || !state.eligibility || !state.eligibility.open) return;
+  const problem = validateAll()["p1-email"];
+  if (problem) {
+    showFieldError("p1-email", problem);
+    byId("p1-email").focus();
+    return;
+  }
+  showFieldError("p1-email", "");
+  const email = normEmail(val("p1-email"));
+  vs.acct = { verifiedEmail: null, registered: null, busy: true };
+  setMsg(el.accountMsg, "");
+  renderAccount();
+
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account", login_hint: email });
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const googleEmail = normEmail(result.user && result.user.email);
+    if (normEmail(val("p1-email")) !== email) {
+      vs.acct.busy = false;
+      renderAccount();
+      setMsg(el.accountMsg, "The email changed during sign-in. Click Verify Account again.", "bad");
+      return;
+    }
+    if (googleEmail !== email) {
+      await signOut(auth).catch(() => {});
+      vs.acct.busy = false;
+      renderAccount();
+      setMsg(el.accountMsg, `You signed in as ${googleEmail || "another account"}, which does not match ${email}. Sign in with the Team Leader Email, or correct the email field.`, "bad");
+      return;
+    }
+    let registered;
+    try {
+      registered = await isEmailRegistered(email);
+    } catch (err) {
+      console.error("Email registration check failed", err);
+      vs.acct.busy = false;
+      renderAccount();
+      setMsg(el.accountMsg, "Signed in, but we could not check existing registrations. Please try again.", "bad");
+      return;
+    }
+    if (normEmail(val("p1-email")) !== email) { vs.acct.busy = false; renderAccount(); return; }
+    vs.acct = { verifiedEmail: email, registered, busy: false };
+    renderAccount();
+    invalidateTeamVerification();
+  } catch (err) {
+    console.error("Google sign-in failed", err);
+    vs.acct.busy = false;
+    renderAccount();
+    setMsg(el.accountMsg, authErrorMessage(err), "bad");
+  }
+}
+
+/* ---- Invalidation: any relevant change requires a fresh check ---- */
+
+function onRegistrationChanged(event) {
+  const id = event.target && event.target.id;
+  if (id === "team-name" && vs.name.checked !== null && normTeam(val("team-name")) !== vs.name.checked) resetNameCheck();
+  if (id === "p1-email" && normEmail(val("p1-email")) !== vs.acct.verifiedEmail) resetAccount();
+  if (vs.team.verified && fingerprint() !== vs.team.fingerprint) invalidateTeamVerification();
+}
+
+function invalidateTeamVerification() {
+  if (vs.pay.pending || vs.pay.done || vs.pay.busy || !vs.team.verified) return;
+  vs.team.verified = false;
+  vs.team.fingerprint = null;
+  renderTeamButton();
+  setHidden(el.payBox, true);
+  setMsg(el.payMsg, "");
+}
+
+/* ---- Locks and button rendering ---- */
+
+function applyLock() {
+  const closed = !state.eligibility || !state.eligibility.open;
+  const frozen = vs.pay.busy || !!vs.pay.pending || vs.pay.done;
+  const lock = closed || frozen;
+  if (el.fields.disabled !== lock) el.fields.disabled = lock;
+  [el.reviewBtn, el.openRules].forEach((b) => { if (b.disabled !== lock) b.disabled = lock; });
+  const vt = lock || vs.team.busy;
+  if (el.verifyTeamBtn.disabled !== vt) el.verifyTeamBtn.disabled = vt;
+  const pb = vs.pay.busy || vs.pay.done;
+  if (el.payBtn.disabled !== pb) el.payBtn.disabled = pb;
+}
+
+function renderTeamButton() {
+  el.verifyTeamBtn.classList.toggle("is-ok", vs.team.verified);
+  setText(el.verifyTeamBtn, vs.team.busy ? "Verifying…" : vs.team.verified ? "Verified Everything" : "Verify Team");
+  applyLock();
+}
+
+function renderPayButton() {
+  const t = state.tournament;
+  const label = vs.pay.pending
+    ? "Retry confirming payment"
+    : t && t.feeInr ? `Pay ₹${t.feeInr.toLocaleString("en-IN")}` : "Pay";
+  setText(el.payBtn, label);
+}
+
+function showIssues(issues) {
+  el.verifyIssuesList.replaceChildren();
+  issues.forEach((issue) => {
+    const li = document.createElement("li");
+    if (issue.focus && byId(issue.focus)) {
+      const a = document.createElement("a");
+      a.href = `#${issue.focus}`;
+      a.textContent = issue.text;
+      a.addEventListener("click", (event) => { event.preventDefault(); byId(issue.focus).focus(); });
+      li.appendChild(a);
+    } else {
+      li.textContent = issue.text;
+    }
+    el.verifyIssuesList.appendChild(li);
+  });
+  setHidden(el.verifyIssues, issues.length === 0);
+  if (issues.length) el.verifyIssues.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+/* ---- Feature 3: Verify Team (everything is checked fresh) ---- */
+
+async function onVerifyTeam() {
+  if (vs.team.busy || !state.eligibility || !state.eligibility.open) return;
+  vs.team.busy = true;
+  vs.team.verified = false;
+  vs.team.fingerprint = null;
+  setHidden(el.payBox, true);
+  showIssues([]);
+  renderTeamButton();
+
+  const before = fingerprint();
+  const issues = [];
+  try {
+    /* Existing form validation: required fields, formats, duplicate UIDs. */
+    const fieldErrors = applyErrors(validateAll());
+    Object.keys(fieldErrors).forEach((id) => issues.push({ text: `${fieldLabel(id)}: ${fieldErrors[id]}`, focus: id }));
+
+    /* Tournament still open + slot still free (fresh read, not the cached page state). */
+    try {
+      const fresh = await fetchFreshTournament();
+      if (!fresh.eligibility.open) issues.push({ text: `${fresh.eligibility.title}. ${fresh.eligibility.message}` });
+      else if (!fresh.t.rules) issues.push({ text: "The rules for this tournament have not been published yet." });
+    } catch (err) {
+      console.error("Tournament re-check failed", err);
+      issues.push({ text: "Could not check the tournament right now. Check your connection and try again." });
+    }
+
+    if (!state.rulesAccepted) issues.push({ text: "Read and accept the Rules & Terms.", focus: "open-rules" });
+
+    /* Team name, checked again against Firestore. */
+    if (!fieldErrors["team-name"]) {
+      try {
+        if (await isTeamNameTaken(val("team-name"))) {
+          issues.push({ text: "This team name is already registered in this tournament.", focus: "team-name" });
+          vs.name = { checked: normTeam(val("team-name")), available: null };
+          el.checkNameBtn.classList.remove("is-ok");
+          setText(el.checkNameBtn, "Check Availability");
+          setMsg(el.nameMsg, "This team name is already registered in this tournament. Please choose a different name.", "bad");
+        }
+      } catch (err) {
+        console.error("Team name re-check failed", err);
+        issues.push({ text: "Could not check the team name. Check your connection and try again." });
+      }
+    }
+
+    /* Google account: signed in, same as the leader email, and not already registered. */
+    if (!fieldErrors["p1-email"]) {
+      const email = normEmail(val("p1-email"));
+      const user = auth.currentUser;
+      const viaGoogle = !!user && user.providerData.some((p) => p.providerId === "google.com");
+      if (!vs.acct.verifiedEmail || vs.acct.verifiedEmail !== email) {
+        issues.push({ text: "Verify your Google account with the Verify Account button. It must match the Team Leader Email.", focus: "verify-account-btn" });
+      } else if (!user || !viaGoogle || normEmail(user.email) !== email) {
+        resetAccount();
+        issues.push({ text: "Your Google sign-in is no longer active. Click Verify Account again.", focus: "verify-account-btn" });
+      } else {
+        try {
+          await user.getIdToken(true); /* fails if the session was revoked or the account disabled */
+          const registered = await isEmailRegistered(email);
+          if (vs.acct.verifiedEmail === email) { vs.acct.registered = registered; renderAccount(); }
+          if (registered) issues.push({ text: "This email is already registered for this tournament.", focus: "p1-email" });
+        } catch (err) {
+          console.error("Account re-check failed", err);
+          resetAccount();
+          issues.push({ text: "Could not re-check your Google account. Click Verify Account again.", focus: "verify-account-btn" });
+        }
+      }
+    }
+
+    if (!issues.length && fingerprint() !== before) issues.push({ text: "The form changed while checking. Click Verify Team again." });
+
+    if (!issues.length) {
+      vs.team.verified = true;
+      vs.team.fingerprint = before;
+      setMsg(el.payMsg, "");
+      renderPayButton();
+      setHidden(el.payBox, false);
+    }
+  } catch (err) {
+    console.error("Verify Team failed", err);
+    issues.push({ text: "Something went wrong while verifying. Please try again." });
+  } finally {
+    vs.team.busy = false;
+    renderTeamButton();
+  }
+  showIssues(issues);
+}
+
+/* ---- Feature 4: Payment (Razorpay Checkout + Apps Script backend) ---- */
+
+/* The backend answers with JSON. text/plain keeps this a "simple" request (no CORS preflight). */
+async function callBackend(body) {
+  if (!/^https:\/\/script\.google\.com\/macros\/s\//.test(PAYMENT_BACKEND_URL)) {
+    throw new UserFacingError("Payment is not configured. Please contact ES Trainers on WhatsApp.");
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 45000);
+  try {
+    const response = await fetch(PAYMENT_BACKEND_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    return await response.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function loadRazorpay() {
+  if (window.Razorpay) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://checkout.razorpay.com/v1/checkout.js";
+    s.async = true;
+    s.onload = () => (window.Razorpay ? resolve() : reject(new Error("Razorpay unavailable")));
+    s.onerror = () => reject(new Error("Razorpay failed to load"));
+    document.head.appendChild(s);
+  });
+}
+
+function setPayBusy(busy) {
+  vs.pay.busy = busy;
+  el.payBtn.setAttribute("aria-busy", busy ? "true" : "false");
+  applyLock();
+}
+
+async function onPay() {
+  if (vs.pay.busy || vs.pay.done) return;
+  if (vs.pay.pending) { await confirmPayment(vs.pay.pending); return; } /* never create a second order */
+
+  if (!vs.team.verified || fingerprint() !== vs.team.fingerprint) {
+    invalidateTeamVerification();
+    showIssues([{ text: "Please verify your team again before paying." }]);
+    return;
+  }
+  vs.pay.failure = "";
+  setPayBusy(true);
+  setMsg(el.payMsg, "Preparing secure payment…", "");
+
+  let order;
+  try {
+    const user = auth.currentUser;
+    if (!user || normEmail(user.email) !== vs.acct.verifiedEmail) throw new UserFacingError("Your Google sign-in is no longer active. Click Verify Account again.");
+    const idToken = await user.getIdToken(true);
+    const registration = registrationSnapshot();
+    order = await callBackend({ action: "createOrder", tournamentId: readTournamentId(), idToken, registration });
+    if (!order || !order.ok) {
+      setPayBusy(false);
+      setMsg(el.payMsg, "");
+      invalidateTeamVerification();
+      showIssues([{ text: (order && order.error) || "Could not start the payment. Please verify your team again." }]);
+      return;
+    }
+    vs.pay.snapshot = registration;
+    await loadRazorpay();
+  } catch (err) {
+    console.error("Could not start payment", err);
+    setPayBusy(false);
+    setMsg(el.payMsg, err instanceof UserFacingError ? err.message : "Could not start the payment. Check your connection and try again. You have not been charged.", "bad");
+    return;
+  }
+  openCheckout(order);
+}
+
+function openCheckout(order) {
+  const t = state.tournament;
+  let paid = false;
+  const rzp = new window.Razorpay({
+    key: order.keyId || RAZORPAY_TEST_KEY_ID,
+    amount: order.amount,
+    currency: order.currency || "INR",
+    order_id: order.orderId,
+    name: "ES Trainers",
+    description: `${(t && t.title) || "BGMI Tournament"} entry fee`,
+    prefill: { name: val("p1-name"), email: normEmail(val("p1-email")), contact: normalizePhone(val("p1-phone")) || "" },
+    theme: { color: "#1f6e5c" },
+    handler: (response) => { paid = true; confirmPayment(response); },
+    modal: {
+      ondismiss: () => {
+        if (paid) return;
+        setPayBusy(false);
+        setMsg(el.payMsg, vs.pay.failure
+          ? `Payment failed: ${vs.pay.failure} Click Pay to try again.`
+          : "Payment was cancelled. Click Pay to try again.", "bad");
+      },
+    },
+  });
+  rzp.on("payment.failed", (r) => {
+    vs.pay.failure = (r && r.error && r.error.description) || "The payment did not go through.";
+    setMsg(el.payMsg, `Payment failed: ${vs.pay.failure} You can retry in the payment window.`, "bad");
+  });
+  rzp.open();
+}
+
+/* Razorpay says "paid" in the browser. That is NOT proof: the backend verifies the signature
+   and asks Razorpay itself before it saves anything. */
+async function confirmPayment(response) {
+  vs.pay.pending = {
+    razorpay_order_id: response.razorpay_order_id,
+    razorpay_payment_id: response.razorpay_payment_id,
+    razorpay_signature: response.razorpay_signature,
+  };
+  const paymentId = vs.pay.pending.razorpay_payment_id;
+  setPayBusy(true);
+  renderPayButton();
+  setHidden(el.payBox, false);
+  setMsg(el.payMsg, "Payment received. Confirming it with the server. Do not close or refresh this page and do not pay again.", "");
+
+  let res;
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("No signed-in user");
+    const idToken = await user.getIdToken(true);
+    res = await callBackend({ action: "confirmPayment", tournamentId: readTournamentId(), idToken, registration: vs.pay.snapshot, ...vs.pay.pending });
+  } catch (err) {
+    console.error("Payment confirmation request failed", err);
+    setPayBusy(false);
+    renderPayButton();
+    setMsg(el.payMsg, `We could not confirm your payment with the server yet. Your payment ID is ${paymentId}. Do not pay again. Check your connection and click "Retry confirming payment".`, "bad");
+    return;
+  }
+
+  if (res && res.ok) { showSuccess(res); return; }
+
+  setPayBusy(false);
+  const reason = (res && res.error) || "The server could not confirm the payment.";
+  if (res && res.final) {
+    /* Definitive answer (e.g. refunded because the name was taken). Allow a fresh start. */
+    vs.pay.pending = null;
+    renderPayButton();
+    invalidateTeamVerification();
+    setHidden(el.payBox, true);
+    showIssues([{ text: reason }]);
+  } else {
+    renderPayButton();
+    setMsg(el.payMsg, `${reason} Your payment ID is ${paymentId}. Do not pay again. Click "Retry confirming payment".`, "bad");
+  }
+}
+
+function showSuccess(res) {
+  vs.pay.done = true;
+  vs.pay.pending = null;
+  setPayBusy(false);
+  setText(el.successId, res.registrationId || "");
+  setText(el.successPayment, res.paymentId || "");
+  setHidden(el.successBox, false);
+  setHidden(el.formActions, true);
+  setHidden(el.errorSummary, true);
+  applyLock();
+  el.successBox.scrollIntoView({ block: "start", behavior: "smooth" });
+  el.successBox.focus({ preventScroll: true });
+}
+
+/* Warn before leaving while a payment is open or waiting to be confirmed. */
+window.addEventListener("beforeunload", (event) => {
+  if (vs.pay.busy || vs.pay.pending) { event.preventDefault(); event.returnValue = ""; }
+});
 
 /* ---- 12. Start ---- */
 
