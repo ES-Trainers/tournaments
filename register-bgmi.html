@@ -113,13 +113,21 @@
       <div class="rcol" id="form-col" hidden>
 
         <div class="notice notice--info" id="info-notice">
-          <h3>Online submission is not live yet</h3>
-          <p>You can fill in and check your squad details here, but this page does not save your entry or take payment yet. Nothing you enter is sent anywhere.</p>
+          <h3>How registration works</h3>
+          <p>Fill in your squad details, check your team name, verify your Google account, then click Verify Team and pay the entry fee. After payment your entry is saved as Pending Admin Review. It is not confirmed until an admin approves it.</p>
         </div>
 
         <div class="notice" id="status-banner" role="status" hidden>
           <h3 id="banner-title"></h3>
           <div id="banner-body"></div>
+        </div>
+
+        <div class="notice notice--ok" id="success-box" role="status" tabindex="-1" hidden>
+          <h3>Payment verified. Registration received</h3>
+          <p>Registration ID: <strong id="success-id"></strong></p>
+          <p>Status: <strong>Pending Admin Review</strong></p>
+          <p>Payment ID: <span id="success-payment"></span></p>
+          <p>Your team is awaiting admin approval and is <strong>not yet finally confirmed</strong>. Please save your Registration ID.</p>
         </div>
 
         <form class="rform" id="reg-form" novalidate>
@@ -130,14 +138,14 @@
 
           <fieldset id="form-fields" class="rreset">
 <fieldset class="rset"><legend>Team details</legend>
-<div class="fgrid"><div class="field field--wide"><label for="team-name">Team name</label><input id="team-name" name="team-name" type="text" aria-describedby="team-name-hint team-name-error" maxlength="30" autocomplete="off" required><p class="field__hint" id="team-name-hint">3 to 30 characters. Must be unique in this tournament.</p><p class="field__error" id="team-name-error"></p></div></div></fieldset>
+<div class="fgrid"><div class="field field--wide"><label for="team-name">Team name</label><input id="team-name" name="team-name" type="text" aria-describedby="team-name-hint team-name-check-msg team-name-error" maxlength="30" autocomplete="off" required><div class="vrow"><button type="button" class="btn btn--ghost vbtn" id="check-name-btn">Check Availability</button><p class="vmsg" id="team-name-check-msg" role="status" aria-live="polite"></p></div><p class="field__hint" id="team-name-hint">3 to 30 characters. Must be unique in this tournament.</p><p class="field__error" id="team-name-error"></p></div></div></fieldset>
 <fieldset class="rset"><legend>Player 1 — Team Leader</legend>
 <p class="rset__note">Email and phone of the leader are the only contact details we use.</p>
 <div class="fgrid"><div class="field"><label for="p1-name">Player name</label><input id="p1-name" name="p1-name" type="text" aria-describedby="p1-name-error" maxlength="40" autocomplete="name" required><p class="field__error" id="p1-name-error"></p></div>
 <div class="field"><label for="p1-ign">BGMI profile name</label><input id="p1-ign" name="p1-ign" type="text" aria-describedby="p1-ign-error" maxlength="30" autocomplete="off" required><p class="field__error" id="p1-ign-error"></p></div>
 <div class="field"><label for="p1-uid">BGMI UID / Character ID</label><input id="p1-uid" name="p1-uid" type="text" aria-describedby="p1-uid-hint p1-uid-error" inputmode="numeric" maxlength="12" autocomplete="off" required><p class="field__hint" id="p1-uid-hint">Numbers only, found in your BGMI profile.</p><p class="field__error" id="p1-uid-error"></p></div>
 <div class="field"><label for="p1-gender">Gender</label><select id="p1-gender" name="p1-gender" required aria-describedby="p1-gender-error"><option value="">Select gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select><p class="field__error" id="p1-gender-error"></p></div>
-<div class="field"><label for="p1-email">Email address</label><input id="p1-email" name="p1-email" type="email" aria-describedby="p1-email-hint p1-email-error" maxlength="120" autocomplete="email" required><p class="field__hint" id="p1-email-hint">Primary contact for your team.</p><p class="field__error" id="p1-email-error"></p></div>
+<div class="field"><label for="p1-email">Email address</label><input id="p1-email" name="p1-email" type="email" aria-describedby="p1-email-hint account-msg p1-email-error" maxlength="120" autocomplete="email" required><div class="vrow"><button type="button" class="btn btn--ghost vbtn" id="verify-account-btn"><span class="vbtn__badge"><svg class="vbtn__g" viewBox="0 0 48 48" width="18" height="18" aria-hidden="true" focusable="false"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg></span><span id="verify-account-label">Verify Account</span></button><p class="vmsg" id="account-msg" role="status" aria-live="polite"></p></div><p class="field__hint" id="p1-email-hint">Primary contact for your team.</p><p class="field__error" id="p1-email-error"></p></div>
 <div class="field"><label for="p1-phone">Phone number</label><input id="p1-phone" name="p1-phone" type="tel" aria-describedby="p1-phone-hint p1-phone-error" maxlength="16" inputmode="tel" autocomplete="tel" required><p class="field__hint" id="p1-phone-hint">10-digit Indian mobile number.</p><p class="field__error" id="p1-phone-error"></p></div></div></fieldset>
 <fieldset class="rset"><legend>Player 2</legend><div class="fgrid"><div class="field"><label for="p2-name">Player name</label><input id="p2-name" name="p2-name" type="text" aria-describedby="p2-name-error" maxlength="40" autocomplete="off" required><p class="field__error" id="p2-name-error"></p></div>
 <div class="field"><label for="p2-ign">BGMI profile name</label><input id="p2-ign" name="p2-ign" type="text" aria-describedby="p2-ign-error" maxlength="30" autocomplete="off" required><p class="field__error" id="p2-ign-error"></p></div>
@@ -170,9 +178,20 @@
             </div>
           </fieldset>
 
-          <div class="form-actions">
-            <button type="submit" class="btn btn--bgmi" id="review-btn">Review my entry</button>
+          <div class="form-actions" id="form-actions">
+            <div class="form-actions__row">
+              <button type="submit" class="btn btn--bgmi" id="review-btn">Review my entry</button>
+              <button type="button" class="btn btn--ghost" id="verify-team-btn">Verify Team</button>
+            </div>
             <p class="field__hint">Reviewing does not submit or pay for anything.</p>
+            <div class="notice notice--error" id="verify-issues" role="alert" tabindex="-1" hidden>
+              <h3>Team not verified yet</h3>
+              <ul id="verify-issues-list"></ul>
+            </div>
+            <div class="pay-box" id="pay-box" hidden>
+              <button type="button" class="btn btn--bgmi" id="pay-btn">Pay</button>
+              <p class="vmsg" id="pay-msg" role="status" aria-live="polite"></p>
+            </div>
           </div>
         </form>
       </div>
@@ -205,13 +224,13 @@
   <div class="panel__body"><div class="panel__inner">
     <div class="notice notice--warn" id="submit-notice">
       <h3>Not submitted yet</h3>
-      <p>Your details will be sent to ES Trainers for manual review. Payment is not collected on this page. Your team is not confirmed until an admin verifies the entry and payment.</p>
+      <p>This is only a review. To register, go back, click Verify Team and then pay the entry fee. Your team is not confirmed until an admin approves the entry.</p>
     </div>
     <div class="rev" id="review-content"></div>
   </div></div>
   <div class="panel__foot">
     <button type="button" class="btn btn--ghost" data-close="review-dialog">Back to editing</button>
-    <button type="button" class="btn btn--bgmi" id="submit-registration">Submit registration</button>
+    <button type="button" class="btn btn--bgmi" id="submit-registration">Continue to Verify Team</button>
   </div>
 </dialog>
 
