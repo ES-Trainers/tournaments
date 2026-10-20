@@ -14,7 +14,12 @@
    - Verify Team: re-runs every check fresh (see section 13).
    - Pay: asks the Apps Script backend for a Razorpay order, opens
      Razorpay Checkout, then sends the payment result back so the
-     backend can verify the signature and save the registration.
+     backend can verify the signature and save the registration
+     as CONFIRMED (the backend also sends the confirmation email).
+   - Celebration: only when the backend answers ok + status "confirmed"
+     a full-screen ES Trainers overlay appears (animation, then a
+     persistent success screen). Continue closes it and resets ONLY the
+     frontend form; it never touches the saved registration or payment.
 
    What this file deliberately does NOT do:
    - It never writes registrations or payment status to Firestore.
@@ -51,7 +56,7 @@ const BGMI_FIREBASE = {
    Used as a fallback only; the backend returns the key it created the order with. */
 const RAZORPAY_TEST_KEY_ID = "rzp_test_TowNZAlqCUBcK2";
 
-const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbxKv_AEo-_tDZqqkeKMDeavr7gBFRE73JplxR40llFc7jtMFVhX0jKCE3scYr_oEfQh/exec";
+const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbz3ryel41s3jrDEgLA5rRmPK5jSn6zDhXRDE3lDMsLc92Ol1vdhy8x4v76jfmzkoTD7/exec";
 
 
 /* ---- 2. Small helpers ---- */
@@ -201,6 +206,22 @@ const el = {
   successBox: byId("success-box"),
   successId: byId("success-id"),
   successPayment: byId("success-payment"),
+  successTitle: byId("success-title"),
+  successStatus: byId("success-status"),
+  successNote: byId("success-note"),
+  cele: byId("celebrate"),
+  celeFx: byId("cele-fx"),
+  celeIntro: byId("cele-intro"),
+  celeFinal: byId("cele-final"),
+  celeTeam: byId("cele-team"),
+  celeSkip: byId("cele-skip"),
+  celeTitle: byId("cele-title"),
+  celeFTeam: byId("cele-f-team"),
+  celeFReg: byId("cele-f-reg"),
+  celeFPay: byId("cele-f-pay"),
+  celeFPayRow: byId("cele-f-pay-row"),
+  celeEmail: byId("cele-email"),
+  celeContinue: byId("cele-continue"),
 };
 
 const state = {
@@ -523,7 +544,7 @@ function buildReview() {
     ["Rules & Terms", "Accepted"],
     ["Team name / email check", "Done when you click Verify Team"],
     ["Payment", "Online, after Verify Team"],
-    ["Registration", "Pending admin review after payment"],
+    ["Registration", "Confirmed automatically once the payment is verified"],
   ]);
 }
 
@@ -605,6 +626,9 @@ function initForm() {
   el.verifyAccountBtn.addEventListener("click", onVerifyAccount);
   el.verifyTeamBtn.addEventListener("click", onVerifyTeam);
   el.payBtn.addEventListener("click", onPay);
+  el.celeSkip.addEventListener("click", showCelebrationFinal);
+  el.celeContinue.addEventListener("click", onCelebrationContinue);
+  el.cele.addEventListener("keydown", trapCelebrationFocus);
 }
 
 
@@ -1166,14 +1190,207 @@ function showSuccess(res) {
   vs.pay.done = true;
   vs.pay.pending = null;
   setPayBusy(false);
-  setText(el.successId, res.registrationId || "");
-  setText(el.successPayment, res.paymentId || "");
-  setHidden(el.successBox, false);
   setHidden(el.formActions, true);
   setHidden(el.errorSummary, true);
   applyLock();
+
+  /* Only a backend-confirmed registration gets the celebration. */
+  if (res.status === "confirmed" && res.registrationId) {
+    openCelebration(res);
+    return;
+  }
+
+  /* Anything else (e.g. an older record that is still awaiting review) is reported exactly as stored. */
+  const status = String(res.status || "").replace(/_/g, " ") || "received";
+  setText(el.successTitle, "Payment verified. Registration received");
+  setText(el.successId, res.registrationId || "");
+  setText(el.successStatus, status);
+  setText(el.successPayment, res.paymentId || "");
+  setText(el.successNote, "Please save your Registration ID. Its status is shown above exactly as stored.");
+  setHidden(el.successBox, false);
   el.successBox.scrollIntoView({ block: "start", behavior: "smooth" });
   el.successBox.focus({ preventScroll: true });
+}
+
+/* ---- Celebration overlay ---- */
+
+const cele = { open: false, timer: null, stopFx: null, inerted: [], lastFocus: null };
+const prefersReducedMotion = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+function emailLine(res) {
+  const to = res.leaderEmail ? ` to ${res.leaderEmail}` : "";
+  if (res.emailStatus === "sent") return `A confirmation email was sent${to}. If you do not see it soon, check your spam folder.`;
+  if (res.emailStatus === "failed") return "Your registration is confirmed. The confirmation email could not be sent right now, so please keep your Registration ID safe.";
+  return `Your confirmation email${to} is being prepared.`;
+}
+
+function openCelebration(res) {
+  cele.open = true;
+  cele.lastFocus = document.activeElement;
+  /* Every value below comes from the backend response (textContent only). */
+  setText(el.celeTeam, res.teamName || "");
+  setText(el.celeFTeam, res.teamName || "");
+  setText(el.celeFReg, res.registrationId || "");
+  setText(el.celeFPay, res.paymentId || "");
+  setHidden(el.celeFPayRow, !res.paymentId);
+  setText(el.celeEmail, emailLine(res));
+
+  /* Everything behind the overlay is inert while it is open. */
+  cele.inerted = [...document.body.children].filter((n) => n !== el.cele && !n.hasAttribute("inert") && n.tagName !== "SCRIPT");
+  cele.inerted.forEach((n) => n.setAttribute("inert", ""));
+  document.body.classList.add("no-scroll");
+
+  setHidden(el.celeIntro, false);
+  el.celeIntro.classList.remove("is-leaving");
+  setHidden(el.celeFinal, true);
+  setHidden(el.cele, false);
+
+  if (prefersReducedMotion()) { showCelebrationFinal(); return; }
+  el.celeSkip.focus({ preventScroll: true });
+  cele.stopFx = startConfetti();
+  cele.timer = setTimeout(showCelebrationFinal, 5200);
+}
+
+/* Stage 2: stable and readable. It stays until the person clicks Continue (no timeout). */
+function showCelebrationFinal() {
+  if (!cele.open || !el.celeFinal.hidden) return;
+  clearTimeout(cele.timer);
+  cele.timer = null;
+  const reveal = () => {
+    if (cele.stopFx) { cele.stopFx(); cele.stopFx = null; } /* the stable screen has no moving effects */
+    setHidden(el.celeIntro, true);
+    setHidden(el.celeFinal, false);
+    el.celeTitle.focus({ preventScroll: true });
+  };
+  if (prefersReducedMotion()) { reveal(); return; }
+  el.celeIntro.classList.add("is-leaving");
+  setTimeout(reveal, 360);
+}
+
+function trapCelebrationFocus(event) {
+  if (event.key !== "Tab") return;
+  const items = [el.celeSkip, el.celeContinue].filter((b) => b.offsetParent !== null);
+  if (!items.length) { event.preventDefault(); return; }
+  const first = items[0], last = items[items.length - 1];
+  if (event.shiftKey && (document.activeElement === first || document.activeElement === el.celeTitle)) { event.preventDefault(); last.focus(); }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+}
+
+/* Lightweight canvas confetti (no library). Stops by itself; returns a stop function. */
+function startConfetti() {
+  const canvas = el.celeFx;
+  const ctx = canvas && canvas.getContext && canvas.getContext("2d");
+  if (!ctx) return null;
+  const colors = ["#1652f0", "#5a8dff", "#09267a", "#7fb2ff", "#ffffff", "#0b1a4a"];
+  let w = 0, h = 0, raf = 0, stopped = false;
+  const resize = () => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = canvas.clientWidth; h = canvas.clientHeight;
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  resize();
+  window.addEventListener("resize", resize);
+  const parts = [];
+  const spawn = (n) => {
+    for (let i = 0; i < n; i++) {
+      parts.push({
+        x: Math.random() * w, y: -12 - Math.random() * h * 0.25,
+        vx: (Math.random() - 0.5) * 2.4, vy: 2.2 + Math.random() * 3.4,
+        s: 5 + Math.random() * 7, r: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.28,
+        c: colors[(Math.random() * colors.length) | 0], diamond: Math.random() < 0.4,
+      });
+    }
+  };
+  const spawnUntil = performance.now() + 2200;
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    cancelAnimationFrame(raf);
+    window.removeEventListener("resize", resize);
+    ctx.clearRect(0, 0, w, h);
+  };
+  const tick = (now) => {
+    if (stopped) return;
+    if (now < spawnUntil && parts.length < 140) spawn(3);
+    ctx.clearRect(0, 0, w, h);
+    for (let i = parts.length - 1; i >= 0; i--) {
+      const p = parts[i];
+      p.x += p.vx + Math.sin(p.y / 38) * 0.5; p.y += p.vy; p.r += p.vr;
+      if (p.y > h + 24) { parts.splice(i, 1); continue; }
+      ctx.save();
+      ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c;
+      if (p.diamond) { ctx.beginPath(); ctx.moveTo(0, -p.s); ctx.lineTo(p.s * 0.6, 0); ctx.lineTo(0, p.s); ctx.lineTo(-p.s * 0.6, 0); ctx.closePath(); ctx.fill(); }
+      else ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2);
+      ctx.restore();
+    }
+    if (now >= spawnUntil && parts.length === 0) { stop(); return; }
+    raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+  return stop;
+}
+
+function onCelebrationContinue() {
+  if (!cele.open) return;
+  cele.open = false; /* a double click cannot run this twice */
+  clearTimeout(cele.timer);
+  cele.timer = null;
+  if (cele.stopFx) { cele.stopFx(); cele.stopFx = null; }
+
+  setHidden(el.cele, true);
+  cele.inerted.forEach((n) => n.removeAttribute("inert"));
+  cele.inerted = [];
+  document.body.classList.remove("no-scroll");
+  /* The old registration ID / payment ID must never look like they belong to the next registration. */
+  [el.celeTeam, el.celeFTeam, el.celeFReg, el.celeFPay, el.celeEmail].forEach((n) => setText(n, ""));
+
+  resetRegistrationForm();
+
+  window.scrollTo({ top: 0, behavior: "auto" });
+  if (!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches)) byId("team-name").focus({ preventScroll: true });
+}
+
+/* Frontend ONLY. It does not call the backend, Firestore or Razorpay, so it cannot undo the saved
+   registration, the verified payment or the email status, and it can never cause another charge.
+   A new registration still has to pass every normal check (unique team name, Google-verified leader,
+   open tournament, free slot, payment), all of which run again on the server. */
+function resetRegistrationForm() {
+  vs.name = { checked: null, available: null };
+  vs.acct = { verifiedEmail: null, registered: null, busy: false };
+  vs.team = { fingerprint: null, verified: false, busy: false };
+  vs.pay = { busy: false, pending: null, snapshot: null, done: false, failure: "" };
+  attempted = false;
+  state.rulesAccepted = false;
+
+  el.form.reset();
+  if (el.rulesDialog.open) el.rulesDialog.close();
+  if (el.reviewDialog.open) el.reviewDialog.close();
+  el.reviewContent.replaceChildren();
+
+  applyErrors({});
+  showSummary({});
+  showIssues([]);
+  resetNameCheck();
+  resetAccount();
+  updateRulesStatus();
+
+  setHidden(el.successBox, true);
+  setText(el.successId, "");
+  setText(el.successPayment, "");
+  setText(el.successStatus, "");
+  setText(el.successNote, "");
+  setHidden(el.payBox, true);
+  setMsg(el.payMsg, "");
+  el.payBtn.setAttribute("aria-busy", "false");
+  setHidden(el.formActions, false);
+
+  renderTeamButton();
+  renderPayButton();
+  applyLock();
+
+  /* The signed-in Google session belonged to the previous team's leader. */
+  signOut(auth).catch(() => {});
 }
 
 /* Warn before leaving while a payment is open or waiting to be confirmed. */
