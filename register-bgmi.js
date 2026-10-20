@@ -51,7 +51,7 @@ const BGMI_FIREBASE = {
    Used as a fallback only; the backend returns the key it created the order with. */
 const RAZORPAY_TEST_KEY_ID = "rzp_test_TowNZAlqCUBcK2";
 
-const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbwGed_Zbqa_zi1l8KmvoQBlvOsmYd03e_YM-Fr04yBGa0rygRH9tRnxyOyIHMPJBTYO/exec";
+const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbxKv_AEo-_tDZqqkeKMDeavr7gBFRE73JplxR40llFc7jtMFVhX0jKCE3scYr_oEfQh/exec";
 
 
 /* ---- 2. Small helpers ---- */
