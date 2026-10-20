@@ -114,7 +114,7 @@
 
         <div class="notice notice--info" id="info-notice">
           <h3>How registration works</h3>
-          <p>Fill in your squad details, check your team name, verify your Google account, then click Verify Team and pay the entry fee. After payment your entry is saved as Pending Admin Review. It is not confirmed until an admin approves it.</p>
+          <p>Fill in your squad details, check your team name, verify your Google account, then click Verify Team and pay the entry fee. As soon as your payment is verified by our server, your team is registered and confirmed automatically, and a confirmation email is sent to the leader's email address.</p>
         </div>
 
         <div class="notice" id="status-banner" role="status" hidden>
@@ -123,11 +123,11 @@
         </div>
 
         <div class="notice notice--ok" id="success-box" role="status" tabindex="-1" hidden>
-          <h3>Payment verified. Registration received</h3>
+          <h3 id="success-title">Payment verified. Registration received</h3>
           <p>Registration ID: <strong id="success-id"></strong></p>
-          <p>Status: <strong>Pending Admin Review</strong></p>
+          <p>Status: <strong id="success-status"></strong></p>
           <p>Payment ID: <span id="success-payment"></span></p>
-          <p>Your team is awaiting admin approval and is <strong>not yet finally confirmed</strong>. Please save your Registration ID.</p>
+          <p id="success-note"></p>
         </div>
 
         <form class="rform" id="reg-form" novalidate>
@@ -202,6 +202,40 @@
 
 </main>
 
+<!-- Celebration overlay: only shown after the backend confirms payment AND registration -->
+<div class="cele" id="celebrate" role="dialog" aria-modal="true" aria-labelledby="cele-title" aria-describedby="cele-msg" hidden>
+  <canvas class="cele__fx" id="cele-fx" aria-hidden="true"></canvas>
+  <div class="cele__grid" aria-hidden="true"></div>
+  <div class="cele__bar cele__bar--a" aria-hidden="true"></div>
+  <div class="cele__bar cele__bar--b" aria-hidden="true"></div>
+
+  <div class="cele__stage cele__stage--intro" id="cele-intro">
+    <div class="cele__logo" aria-hidden="true">
+      <span class="cele__ring cele__ring--1"></span><span class="cele__ring cele__ring--2"></span><span class="cele__ring cele__ring--3"></span>
+      <img src="assets/logo/logo.png" alt="" width="200" height="200" class="cele__img">
+    </div>
+    <p class="cele__brand">ES TRAINERS</p>
+    <p class="cele__congrats">Congratulations!</p>
+    <h2 class="cele__team" id="cele-team"></h2>
+    <p class="cele__msg" id="cele-msg">Payment verified. Your registration is complete.</p>
+    <button type="button" class="cele__skip" id="cele-skip">Skip animation</button>
+  </div>
+
+  <div class="cele__stage cele__stage--final" id="cele-final" hidden>
+    <img src="assets/logo/logo.png" alt="ES Trainers logo" width="96" height="96" class="cele__img cele__img--sm">
+    <p class="cele__brand">ES TRAINERS</p>
+    <h2 class="cele__title" id="cele-title" tabindex="-1">Registration Confirmed</h2>
+    <p class="cele__sub" id="cele-sub">Payment verified and your team is registered.</p>
+    <dl class="cele__facts">
+      <div><dt>Team</dt><dd id="cele-f-team"></dd></div>
+      <div><dt>Registration ID</dt><dd id="cele-f-reg" class="mono"></dd></div>
+      <div id="cele-f-pay-row"><dt>Payment ID</dt><dd id="cele-f-pay" class="mono"></dd></div>
+    </dl>
+    <p class="cele__email" id="cele-email"></p>
+    <button type="button" class="btn btn--bgmi cele__continue" id="cele-continue">Continue</button>
+  </div>
+</div>
+
 <!-- Rules &amp; Terms: full-screen panel on this page -->
 <dialog class="panel" id="rules-dialog" aria-labelledby="rules-title">
   <div class="panel__bar">
@@ -224,7 +258,7 @@
   <div class="panel__body"><div class="panel__inner">
     <div class="notice notice--warn" id="submit-notice">
       <h3>Not submitted yet</h3>
-      <p>This is only a review. To register, go back, click Verify Team and then pay the entry fee. Your team is not confirmed until an admin approves the entry.</p>
+      <p>This is only a review. To register, go back, click Verify Team and then pay the entry fee. Your team is confirmed automatically once the payment is verified.</p>
     </div>
     <div class="rev" id="review-content"></div>
   </div></div>
