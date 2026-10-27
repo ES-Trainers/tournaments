@@ -1,0 +1,7 @@
+# ES Trainers — https://estrainers.in
+# Nothing is blocked. register-bgmi.html is kept out of search results with a
+# noindex meta tag, which crawlers can only see if they are allowed to fetch the page.
+User-agent: *
+Allow: /
+
+Sitemap: https://estrainers.in/sitemap.xml
