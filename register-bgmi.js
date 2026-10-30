@@ -59,7 +59,7 @@ const BGMI_FIREBASE = {
 const RAZORPAY_TEST_KEY_ID = "rzp_test_TowNZAlqCUBcK2";
 
 // Deploy 7
-const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbwwxSt0PocrZZNm5gKQ2455oRMqtREapANgm2QHjeOM4PWeBpleYXAAEx8vhq7NkcvU/exec";
+const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbxMLt6hW4IJqpBHNfNgrIj8w_zTbpN-GoRQAlUUBQkH04YGiBihF23KyXEx54rNVjJc/exec";
 
 
 /* ---- 2. Small helpers ---- */
@@ -218,6 +218,15 @@ const el = {
   successTitle: byId("success-title"),
   successStatus: byId("success-status"),
   successNote: byId("success-note"),
+  vfy: byId("verify-overlay"),
+  vfyCard: document.querySelector("#verify-overlay .vfy__card"),
+  vfyTitle: byId("vfy-title"),
+  vfyMsg: byId("vfy-msg"),
+  vfyId: byId("vfy-id"),
+  vfyPay: byId("vfy-pay"),
+  vfyActions: byId("vfy-actions"),
+  vfyRetry: byId("vfy-retry"),
+  vfyClose: byId("vfy-close"),
   cele: byId("celebrate"),
   celeFx: byId("cele-fx"),
   celeIntro: byId("cele-intro"),
@@ -615,6 +624,8 @@ function initForm() {
   el.payBtn.addEventListener("click", onPay);
   el.celeSkip.addEventListener("click", showCelebrationFinal);
   el.celeContinue.addEventListener("click", onCelebrationContinue);
+  el.vfyRetry.addEventListener("click", () => { if (vs.pay.pending && !vs.pay.confirming) confirmPayment(vs.pay.pending); });
+  el.vfyClose.addEventListener("click", hideVerify); /* the inline "Retry confirming payment" button stays available behind it */
   el.cele.addEventListener("keydown", trapCelebrationFocus);
 }
 
@@ -1133,15 +1144,63 @@ function openCheckout(order) {
   rzp.open();
 }
 
+/* ---- Payment verification panel ----
+   Opens SYNCHRONOUSLY when Razorpay hands back its result (before any await) and stays until the
+   backend has answered. It is never a success screen: success is only shown after the server confirms
+   the payment AND the registration has been saved. */
+const vfy = { open: false, inerted: [], lastFocus: null };
+
+function showVerify(mode, { message, paymentId } = {}) {
+  const texts = {
+    pending: ["Verifying your payment", "Your payment is being verified securely. Please do not refresh or close this page."],
+    retry: ["We are still confirming your payment", message || "The server has not confirmed your payment yet."],
+    final: ["Registration could not be completed", message || "The server could not complete this registration."]
+  };
+  el.vfyCard.setAttribute("data-mode", mode);
+  setText(el.vfyTitle, texts[mode][0]);
+  setText(el.vfyMsg, texts[mode][1]);
+  setText(el.vfyPay, paymentId || "");
+  setHidden(el.vfyId, !paymentId);
+  setHidden(el.vfyActions, mode === "pending");
+  if (mode === "retry") {
+    setHidden(el.vfyRetry, false);
+    setText(el.vfyClose, "Close this message");
+  } else if (mode === "final") {
+    setHidden(el.vfyRetry, true);
+    setText(el.vfyClose, "Back to the form");
+  }
+  if (!vfy.open) {
+    vfy.open = true;
+    vfy.lastFocus = document.activeElement;
+    vfy.inerted = [...document.body.children].filter((n) => n !== el.vfy && !n.hasAttribute("inert") && n.tagName !== "SCRIPT");
+    vfy.inerted.forEach((n) => n.setAttribute("inert", ""));
+    document.body.classList.add("no-scroll");
+    setHidden(el.vfy, false);
+  }
+  el.vfyTitle.focus({ preventScroll: true });
+}
+
+function hideVerify() {
+  if (!vfy.open) return;
+  vfy.open = false;
+  setHidden(el.vfy, true);
+  vfy.inerted.forEach((n) => n.removeAttribute("inert"));
+  vfy.inerted = [];
+  document.body.classList.remove("no-scroll");
+}
+
 /* Razorpay says "paid" in the browser. That is NOT proof: the backend verifies the signature
    and asks Razorpay itself before it saves anything. */
 async function confirmPayment(response) {
+  if (vs.pay.confirming) return; /* one verification request at a time: a double tap can never send two */
+  vs.pay.confirming = true;
   vs.pay.pending = {
     razorpay_order_id: response.razorpay_order_id,
     razorpay_payment_id: response.razorpay_payment_id,
     razorpay_signature: response.razorpay_signature,
   };
   const paymentId = vs.pay.pending.razorpay_payment_id;
+  showVerify("pending", { paymentId }); /* immediately, before any network work */
   setPayBusy(true);
   renderPayButton();
   setHidden(el.payBox, false);
@@ -1152,16 +1211,27 @@ async function confirmPayment(response) {
     const user = auth.currentUser;
     if (!user) throw new Error("No signed-in user");
     const idToken = await user.getIdToken(true);
-    res = await callBackend({ action: "confirmPayment", tournamentId: readTournamentId(), idToken, registration: vs.pay.snapshot, ...vs.pay.pending });
+    res = await callBackend({ action: "confirmPayment", tournamentId: readTournamentId(), idToken, registration: vs.pay.snapshot, deferEmail: true, ...vs.pay.pending });
   } catch (err) {
     console.error("Payment confirmation request failed", err);
+    vs.pay.confirming = false;
     setPayBusy(false);
     renderPayButton();
-    setMsg(el.payMsg, `We could not confirm your payment with the server yet. Your payment ID is ${paymentId}. Do not pay again. Check your connection and click "Retry confirming payment".`, "bad");
+    const msg = `The server did not answer in time. Your payment is safe. Your payment ID is ${paymentId}. Do not pay again. Check your connection and tap "Retry confirming payment".`;
+    setMsg(el.payMsg, msg, "bad");
+    showVerify("retry", { message: msg, paymentId });
     return;
   }
+  vs.pay.confirming = false;
 
-  if (res && res.ok) { showSuccess(res); return; }
+  if (res && res.ok) {
+    /* Server confirmed AND saved the registration: only now does the panel close and the celebration begin. */
+    const confirmed = withSavedFallback(res);
+    hideVerify();
+    requestConfirmationEmail(confirmed); /* starts now, does not delay the success screen */
+    showSuccess(confirmed);
+    return;
+  }
 
   setPayBusy(false);
   const reason = (res && res.error) || "The server could not confirm the payment.";
@@ -1172,9 +1242,35 @@ async function confirmPayment(response) {
     invalidateTeamVerification();
     setHidden(el.payBox, true);
     showIssues([{ text: reason }]);
+    showVerify("final", { message: reason, paymentId });
   } else {
     renderPayButton();
-    setMsg(el.payMsg, `${reason} Your payment ID is ${paymentId}. Do not pay again. Click "Retry confirming payment".`, "bad");
+    const msg = `${reason} Your payment ID is ${paymentId}. Do not pay again. Tap "Retry confirming payment".`;
+    setMsg(el.payMsg, msg, "bad");
+    showVerify("retry", { message: msg, paymentId });
+  }
+}
+
+/* The backend returns the SAVED teamName / leaderEmail. Only if an older deployed backend omits them do we fall back
+   to the registration snapshot that the backend itself verified against the signed order (payloadHash). */
+function withSavedFallback(res) {
+  const snap = vs.pay.snapshot || {};
+  return { ...res, teamName: res.teamName || snap.teamName || "", leaderEmail: res.leaderEmail || snap.leaderEmail || "" };
+}
+
+/* Second, separate request so the success screen never waits for MailApp. Idempotent on the server. */
+async function requestConfirmationEmail(res, attempt = 1) {
+  if (res.emailStatus === "sent" || !res.registrationId) return;
+  try {
+    const user = auth.currentUser;
+    if (!user) return;
+    const idToken = await user.getIdToken(); /* started before Continue can sign the user out */
+    const r = await callBackend({ action: "sendConfirmationEmail", tournamentId: readTournamentId(), idToken, registrationId: res.registrationId });
+    if (r && r.ok && r.emailStatus && cele.open && cele.regId === res.registrationId) setText(el.celeEmail, emailLine({ ...res, emailStatus: r.emailStatus }));
+    if (!(r && r.ok && (r.emailStatus === "sent" || r.emailStatus === "failed")) && attempt < 2) setTimeout(() => requestConfirmationEmail(res, 2), 4000);
+  } catch (err) {
+    console.error("Confirmation email request failed", err);
+    if (attempt < 2) setTimeout(() => requestConfirmationEmail(res, 2), 4000);
   }
 }
 
@@ -1206,7 +1302,7 @@ function showSuccess(res) {
 
 /* ---- Celebration overlay ---- */
 
-const cele = { open: false, timer: null, stopFx: null, inerted: [], lastFocus: null };
+const cele = { open: false, timer: null, stopFx: null, inerted: [], lastFocus: null, regId: null };
 const prefersReducedMotion = () => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
 function emailLine(res) {
@@ -1218,12 +1314,15 @@ function emailLine(res) {
 
 function openCelebration(res) {
   cele.open = true;
+  cele.regId = res.registrationId || null;
   cele.lastFocus = document.activeElement;
   /* Every value below comes from the backend response (textContent only). */
   setText(el.celeTeam, res.teamName || "");
   setText(el.celeFTeam, res.teamName || "");
   setText(el.celeFReg, res.registrationId || "");
   setText(el.celeFPay, res.paymentId || "");
+  /* Long values wrap on screen; the full value is also in the title so it is never lost. */
+  [[el.celeFTeam, res.teamName], [el.celeFReg, res.registrationId], [el.celeFPay, res.paymentId]].forEach(([n, v]) => { if (v) n.setAttribute("title", v); else n.removeAttribute("title"); });
   setHidden(el.celeFPayRow, !res.paymentId);
   setText(el.celeEmail, emailLine(res));
 
@@ -1336,6 +1435,7 @@ function onCelebrationContinue() {
   document.body.classList.remove("no-scroll");
   /* The old registration ID / payment ID must never look like they belong to the next registration. */
   [el.celeTeam, el.celeFTeam, el.celeFReg, el.celeFPay, el.celeEmail].forEach((n) => setText(n, ""));
+  cele.regId = null;
 
   resetRegistrationForm();
 
