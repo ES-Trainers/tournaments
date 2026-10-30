@@ -188,12 +188,29 @@
 
 </main>
 
+<!-- Payment verification panel: opens the moment Razorpay returns, stays until the SERVER answers.
+     It is NOT a success screen; success only appears after the backend confirms and saves the registration. -->
+<div class="vfy" id="verify-overlay" role="alertdialog" aria-modal="true" aria-labelledby="vfy-title" aria-describedby="vfy-msg" hidden>
+  <div class="vfy__card" data-mode="pending">
+    <div class="vfy__spin" aria-hidden="true"><span></span><span></span></div>
+    <h2 class="vfy__title" id="vfy-title" tabindex="-1">Verifying your payment</h2>
+    <p class="vfy__msg" id="vfy-msg">Your payment is being verified securely. Please do not refresh or close this page.</p>
+    <p class="vfy__id" id="vfy-id" hidden>Payment ID<code id="vfy-pay"></code></p>
+    <div class="vfy__actions" id="vfy-actions" hidden>
+      <button type="button" class="btn btn--bgmi" id="vfy-retry">Retry confirming payment</button>
+      <button type="button" class="vfy__link" id="vfy-close">Close this message</button>
+    </div>
+  </div>
+</div>
+
 <!-- Celebration overlay: only shown after the backend confirms payment AND registration -->
 <div class="cele" id="celebrate" role="dialog" aria-modal="true" aria-labelledby="cele-title" aria-describedby="cele-msg" hidden>
   <canvas class="cele__fx" id="cele-fx" aria-hidden="true"></canvas>
   <div class="cele__grid" aria-hidden="true"></div>
-  <div class="cele__bar cele__bar--a" aria-hidden="true"></div>
-  <div class="cele__bar cele__bar--b" aria-hidden="true"></div>
+  <div class="cele__clip" aria-hidden="true">
+    <div class="cele__bar cele__bar--a"></div>
+    <div class="cele__bar cele__bar--b"></div>
+  </div>
 
   <div class="cele__stage cele__stage--intro" id="cele-intro">
     <div class="cele__logo" aria-hidden="true">
