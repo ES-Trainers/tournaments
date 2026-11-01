@@ -59,7 +59,7 @@ const BGMI_FIREBASE = {
 const RAZORPAY_TEST_KEY_ID = "rzp_test_TowNZAlqCUBcK2";
 
 // Deploy 7
-const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbwTSYp8qg0RI1tZdT5dV-pzR6xAVxmL92eylexzIhsV1vNYx4E6cairILt0_NRFG5cV/exec";
+const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbzg5JgKmEyj2w6LZNSAGyP5KpqrIMGrevr-U76TQGCHMwit4Qe4TCpRjfoSQZBalvXc/exec";
 
 
 /* ---- 2. Small helpers ---- */
