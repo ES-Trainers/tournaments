@@ -24,7 +24,7 @@
    What this file deliberately does NOT do:
    - It never writes registrations or payment status to Firestore.
      Only the Apps Script backend does, after verifying payment.
-   - It never holds a Razorpay secret (only the public Key ID).
+   - It never holds a Razorpay secret. The Razorpay Payment Button ids are public configuration read from Firestore (EntryFees).
    ========================================================== */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -56,7 +56,6 @@ const BGMI_FIREBASE = {
 
 /* Razorpay TEST Key ID (public by design, never the secret).
    Used as a fallback only; the backend returns the key it created the order with. */
-const RAZORPAY_TEST_KEY_ID = "rzp_test_TowNZAlqCUBcK2";
 
 // Deploy 7
 const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbzg5JgKmEyj2w6LZNSAGyP5KpqrIMGrevr-U76TQGCHMwit4Qe4TCpRjfoSQZBalvXc/exec";
@@ -212,6 +211,14 @@ const el = {
   payBox: byId("pay-box"),
   payBtn: byId("pay-btn"),
   payMsg: byId("pay-msg"),
+  pbPanel: byId("pb-panel"),
+  pbFee: byId("pb-fee"),
+  pbEmail: byId("pb-email"),
+  pbPhone: byId("pb-phone"),
+  pbCode: byId("pb-code"),
+  pbMount: byId("pb-mount"),
+  pbStatus: byId("pb-status"),
+  pbRestart: byId("pb-restart"),
   successBox: byId("success-box"),
   successId: byId("success-id"),
   successPayment: byId("success-payment"),
@@ -631,9 +638,9 @@ function initForm() {
   el.verifyAccountBtn.addEventListener("click", onVerifyAccount);
   el.verifyTeamBtn.addEventListener("click", onVerifyTeam);
   el.payBtn.addEventListener("click", onPay);
+  el.pbRestart.addEventListener("click", restartPaymentSession);
   el.celeSkip.addEventListener("click", showCelebrationFinal);
   el.celeContinue.addEventListener("click", onCelebrationContinue);
-  el.vfyRetry.addEventListener("click", () => { if (vs.pay.pending && !vs.pay.confirming) confirmPayment(vs.pay.pending); });
   el.vfyClose.addEventListener("click", hideVerify); /* the inline "Retry confirming payment" button stays available behind it */
   el.cele.addEventListener("keydown", trapCelebrationFocus);
 }
@@ -926,10 +933,7 @@ function renderTeamButton() {
 
 function renderPayButton() {
   const t = state.tournament;
-  const label = vs.pay.pending
-    ? "Retry confirming payment"
-    : t && t.feeInr ? `Pay ₹${t.feeInr.toLocaleString("en-IN")}` : "Pay";
-  setText(el.payBtn, label);
+  setText(el.payBtn, t && t.feeInr ? `Continue to payment · ₹${t.feeInr.toLocaleString("en-IN")}` : "Continue to payment");
 }
 
 function showIssues(issues) {
@@ -1077,33 +1081,87 @@ async function callBackend(body) {
   }
 }
 
-function loadRazorpay() {
-  if (window.Razorpay) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = "https://checkout.razorpay.com/v1/checkout.js";
-    s.async = true;
-    s.onload = () => (window.Razorpay ? resolve() : reject(new Error("Razorpay unavailable")));
-    s.onerror = () => reject(new Error("Razorpay failed to load"));
-    document.head.appendChild(s);
-  });
-}
-
 function setPayBusy(busy) {
   vs.pay.busy = busy;
   el.payBtn.setAttribute("aria-busy", busy ? "true" : "false");
   applyLock();
 }
 
+/* ==========================================================
+   Razorpay Payment Button flow
+   1. Verify Team + Google verification (unchanged) -> "Continue to payment".
+   2. The tournament fee (from Firebase) selects EntryFees/<fee>; the server creates a PENDING registration session.
+   3. The matching fixed-amount Payment Button is shown. The player pays inside Razorpay.
+   4. Razorpay -> Cloudflare Worker -> Apps Script verify the payment and confirm the registration.
+   5. This page only POLLS the server. Returning from Razorpay, or any browser message, is never treated as proof of payment.
+   ========================================================== */
+
+/* Backoff keeps Apps Script usage low: every 3 s for the first minute, every 8 s until minute 10, then every 20 s. */
+const PB_POLL_FAST_MS = 3000;
+const PB_POLL_MID_MS = 8000;
+const PB_POLL_SLOW_MS = 20000;
+const PB_POLL_FAST_FOR_MS = 60 * 1000;
+const PB_POLL_MID_FOR_MS = 10 * 60 * 1000;
+const PB_POLL_MAX_MS = 2 * 60 * 60 * 1000;
+const pb = { timer: null, started: 0, errors: 0, stopped: true };
+
+function setPbStatus(text, tone) {
+  setText(el.pbStatus, text || "");
+  el.pbStatus.className = "pbpanel__status" + (tone ? ` is-${tone}` : "");
+}
+
+/* The Payment Button id comes from Firestore (EntryFees/<fee>), never from this file. */
+async function loadEntryFeeConfig(feeInr) {
+  const snap = await getDoc(doc(db, "EntryFees", String(feeInr)));
+  const unsupported = () => new UserFacingError(`No payment button is set up for the ₹${feeInr} entry fee yet. Please contact ES Trainers on WhatsApp. You have not been charged.`);
+  if (!snap.exists()) throw unsupported();
+  const d = snap.data() || {};
+  if (d.status !== "active" || d.currency !== "INR" || d.amount !== feeInr || !/^pl_[A-Za-z0-9]{8,32}$/.test(String(d.buttonId || ""))) throw unsupported();
+  return { amount: d.amount, buttonId: d.buttonId };
+}
+
+/* Standard Razorpay embed: <form><script src=".../payment-button.js" data-payment_button_id="pl_..."></script></form> */
+function mountPaymentButton(buttonId) {
+  el.pbMount.replaceChildren();
+  const form = document.createElement("form");
+  el.pbMount.appendChild(form);
+  const s = document.createElement("script");
+  s.src = "https://checkout.razorpay.com/v1/payment-button.js";
+  s.setAttribute("data-payment_button_id", buttonId);
+  s.async = true;
+  s.onerror = () => setPbStatus("The payment button could not be loaded. Check your connection and refresh this page. You have not been charged.", "bad");
+  form.appendChild(s);
+}
+
+function showPaymentPanel(session, cfg) {
+  setText(el.pbFee, `₹${session.amountInr.toLocaleString("en-IN")}`);
+  setText(el.pbEmail, normEmail(val("p1-email")));
+  setText(el.pbPhone, normalizePhone(val("p1-phone")) || "");
+  setText(el.pbCode, session.referenceCode || "");
+  setHidden(el.pbRestart, true);
+  setHidden(el.payBtn, true);
+  setMsg(el.payMsg, "");
+  setHidden(el.pbPanel, false);
+  mountPaymentButton(cfg.buttonId);
+  setPbStatus("Waiting for your payment. Complete it in the payment form. This page updates automatically.");
+}
+
+function resetPaymentPanel() {
+  stopPolling();
+  el.pbMount.replaceChildren();
+  setHidden(el.pbPanel, true);
+  setHidden(el.pbRestart, true);
+  setHidden(el.payBtn, false);
+  setPbStatus("");
+}
+
 async function onPay() {
-  if (vs.pay.busy || vs.pay.done) return;
-  if (vs.pay.pending) { await confirmPayment(vs.pay.pending); return; } /* never create a second order */
+  if (vs.pay.busy || vs.pay.done || vs.pay.pending) return; /* one open payment session at a time */
   if (state.raw) renderTournament(state.raw); /* re-evaluate the deadline right now (device clock; backend is authoritative) */
   if (!state.eligibility || !state.eligibility.open) {
     showIssues([{ text: state.eligibility ? state.eligibility.message : "Registration is not available." }]);
     return;
   }
-
   if (!vs.team.verified || fingerprint() !== vs.team.fingerprint) {
     invalidateTeamVerification();
     showIssues([{ text: "Please verify your team again before paying." }]);
@@ -1113,59 +1171,116 @@ async function onPay() {
   setPayBusy(true);
   setMsg(el.payMsg, "Preparing secure payment…", "");
 
-  let order;
   try {
     const user = auth.currentUser;
     if (!user || normEmail(user.email) !== vs.acct.verifiedEmail) throw new UserFacingError("Your Google sign-in is no longer active. Click Verify Account again.");
+    const feeInr = state.tournament && state.tournament.feeInr;
+    if (!feeInr) throw new UserFacingError("The entry fee for this tournament is not set. Please contact ES Trainers. You have not been charged.");
+    const cfg = await loadEntryFeeConfig(feeInr); /* Firestore: the button that matches this tournament's fee */
     const idToken = await user.getIdToken(true);
     const registration = registrationSnapshot();
-    order = await callBackend({ action: "createOrder", tournamentId: readTournamentId(), idToken, registration });
-    if (!order || !order.ok) {
+    const session = await callBackend({ action: "createPendingRegistration", tournamentId: readTournamentId(), idToken, registration });
+    if (!session || !session.ok) {
       setPayBusy(false);
       setMsg(el.payMsg, "");
       invalidateTeamVerification();
-      showIssues([{ text: (order && order.error) || "Could not start the payment. Please verify your team again." }]);
+      showIssues([{ text: (session && session.error) || "Could not start the payment. Please verify your team again." }]);
       return;
     }
+    /* The server read the fee from the tournament itself: it must agree with Firestore EntryFees and with the page. */
+    if (session.buttonId !== cfg.buttonId || session.amountInr !== feeInr || session.amountPaise !== feeInr * 100) {
+      setPayBusy(false);
+      throw new UserFacingError("The payment configuration for this tournament does not match. Please contact ES Trainers. You have not been charged.");
+    }
     vs.pay.snapshot = registration;
-    await loadRazorpay();
+    vs.pay.pending = { pendingId: session.pendingId, referenceCode: session.referenceCode };
+    setPayBusy(false);
+    applyLock();
+    showPaymentPanel(session, cfg);
+    startPolling();
   } catch (err) {
     console.error("Could not start payment", err);
     setPayBusy(false);
     setMsg(el.payMsg, err instanceof UserFacingError ? err.message : "Could not start the payment. Check your connection and try again. You have not been charged.", "bad");
-    return;
   }
-  openCheckout(order);
 }
 
-function openCheckout(order) {
-  const t = state.tournament;
-  let paid = false;
-  const rzp = new window.Razorpay({
-    key: order.keyId || RAZORPAY_TEST_KEY_ID,
-    amount: order.amount,
-    currency: order.currency || "INR",
-    order_id: order.orderId,
-    name: "ES Trainers",
-    description: `${(t && t.title) || "BGMI Tournament"} entry fee`,
-    prefill: { name: val("p1-name"), email: normEmail(val("p1-email")), contact: normalizePhone(val("p1-phone")) || "" },
-    theme: { color: "#1f6e5c" },
-    handler: (response) => { paid = true; confirmPayment(response); },
-    modal: {
-      ondismiss: () => {
-        if (paid) return;
-        setPayBusy(false);
-        setMsg(el.payMsg, vs.pay.failure
-          ? `Payment failed: ${vs.pay.failure} Click Pay to try again.`
-          : "Payment was cancelled. Click Pay to try again.", "bad");
-      },
-    },
-  });
-  rzp.on("payment.failed", (r) => {
-    vs.pay.failure = (r && r.error && r.error.description) || "The payment did not go through.";
-    setMsg(el.payMsg, `Payment failed: ${vs.pay.failure} You can retry in the payment window.`, "bad");
-  });
-  rzp.open();
+function startPolling() {
+  stopPolling();
+  pb.stopped = false;
+  pb.started = Date.now();
+  pb.errors = 0;
+  pb.timer = setTimeout(pollOnce, PB_POLL_FAST_MS);
+}
+function stopPolling() {
+  pb.stopped = true;
+  if (pb.timer) clearTimeout(pb.timer);
+  pb.timer = null;
+}
+
+/* Asks the SERVER what happened. Only a server answer of "confirmed" (registration saved) opens the celebration. */
+async function pollOnce() {
+  const session = vs.pay.pending;
+  if (pb.stopped || !session) return;
+  let res = null;
+  try {
+    const user = auth.currentUser;
+    if (!user) throw new Error("signed out");
+    const idToken = await user.getIdToken();
+    res = await callBackend({ action: "checkPaymentStatus", tournamentId: readTournamentId(), idToken, pendingId: session.pendingId });
+    pb.errors = res && res.ok ? 0 : pb.errors + 1;
+  } catch (err) {
+    pb.errors++;
+    console.error("Payment status check failed", err);
+  }
+  if (pb.stopped || vs.pay.pending !== session) return;
+
+  if (res && res.ok) {
+    if (res.state === "confirmed" && res.registrationId) { stopPolling(); onPaymentConfirmed(res); return; }
+    if (res.state === "failed") { stopPolling(); onPaymentFailed(res); return; }
+    if (res.state === "expired" || res.state === "superseded") { stopPolling(); onSessionExpired(); return; }
+    setPbStatus("Waiting for your payment. Complete it in the payment form. This page updates automatically.");
+  } else if (pb.errors >= 6) {
+    stopPolling();
+    setPbStatus((res && res.error) || "We cannot reach the server to check your payment. If you already paid, your confirmation will be emailed. Otherwise refresh this page. Do not pay twice.", "bad");
+    return;
+  } else {
+    setPbStatus("Checking your payment… the connection is slow, trying again.", "idle");
+  }
+  const elapsed = Date.now() - pb.started;
+  if (elapsed > PB_POLL_MAX_MS) { stopPolling(); onSessionExpired(); return; }
+  pb.timer = setTimeout(pollOnce, elapsed < PB_POLL_FAST_FOR_MS ? PB_POLL_FAST_MS : (elapsed < PB_POLL_MID_FOR_MS ? PB_POLL_MID_MS : PB_POLL_SLOW_MS));
+}
+
+function onPaymentConfirmed(res) {
+  setPbStatus("");
+  setHidden(el.pbPanel, true);
+  el.pbMount.replaceChildren();
+  if (res.emailStatus !== "sent") requestConfirmationEmail(res); /* the server usually has sent it already; this is an idempotent safety net */
+  showSuccess(res);
+}
+
+function onPaymentFailed(res) {
+  vs.pay.pending = null;
+  resetPaymentPanel();
+  invalidateTeamVerification();
+  applyLock();
+  showIssues([{ text: res.error || "The registration could not be completed." }]);
+  showVerify("final", { message: res.error || "The registration could not be completed.", paymentId: res.paymentId || "" });
+}
+
+function onSessionExpired() {
+  setPbStatus("This payment session has expired. If you already paid, ES Trainers will check it and email you, or contact us on WhatsApp with your payment ID. If you have not paid, start a new session below.", "bad");
+  setHidden(el.pbRestart, false);
+}
+
+function restartPaymentSession() {
+  vs.pay.pending = null;
+  vs.pay.snapshot = null;
+  resetPaymentPanel();
+  setMsg(el.payMsg, "");
+  applyLock(); /* the server re-validates everything when the new session is created */
+  renderPayButton();
 }
 
 /* ---- Payment verification panel ----
@@ -1211,75 +1326,6 @@ function hideVerify() {
   vfy.inerted.forEach((n) => n.removeAttribute("inert"));
   vfy.inerted = [];
   document.body.classList.remove("no-scroll");
-}
-
-/* Razorpay says "paid" in the browser. That is NOT proof: the backend verifies the signature
-   and asks Razorpay itself before it saves anything. */
-async function confirmPayment(response) {
-  if (vs.pay.confirming) return; /* one verification request at a time: a double tap can never send two */
-  vs.pay.confirming = true;
-  vs.pay.pending = {
-    razorpay_order_id: response.razorpay_order_id,
-    razorpay_payment_id: response.razorpay_payment_id,
-    razorpay_signature: response.razorpay_signature,
-  };
-  const paymentId = vs.pay.pending.razorpay_payment_id;
-  showVerify("pending", { paymentId }); /* immediately, before any network work */
-  setPayBusy(true);
-  renderPayButton();
-  setHidden(el.payBox, false);
-  setMsg(el.payMsg, "Payment received. Confirming it with the server. Do not close or refresh this page and do not pay again.", "");
-
-  let res;
-  try {
-    const user = auth.currentUser;
-    if (!user) throw new Error("No signed-in user");
-    const idToken = await user.getIdToken(true);
-    res = await callBackend({ action: "confirmPayment", tournamentId: readTournamentId(), idToken, registration: vs.pay.snapshot, deferEmail: true, ...vs.pay.pending });
-  } catch (err) {
-    console.error("Payment confirmation request failed", err);
-    vs.pay.confirming = false;
-    setPayBusy(false);
-    renderPayButton();
-    const msg = `The server did not answer in time. Your payment is safe. Your payment ID is ${paymentId}. Do not pay again. Check your connection and tap "Retry confirming payment".`;
-    setMsg(el.payMsg, msg, "bad");
-    showVerify("retry", { message: msg, paymentId });
-    return;
-  }
-  vs.pay.confirming = false;
-
-  if (res && res.ok) {
-    /* Server confirmed AND saved the registration: only now does the panel close and the celebration begin. */
-    const confirmed = withSavedFallback(res);
-    hideVerify();
-    requestConfirmationEmail(confirmed); /* starts now, does not delay the success screen */
-    showSuccess(confirmed);
-    return;
-  }
-
-  setPayBusy(false);
-  const reason = (res && res.error) || "The server could not confirm the payment.";
-  if (res && res.final) {
-    /* Definitive answer (e.g. refunded because the name was taken). Allow a fresh start. */
-    vs.pay.pending = null;
-    renderPayButton();
-    invalidateTeamVerification();
-    setHidden(el.payBox, true);
-    showIssues([{ text: reason }]);
-    showVerify("final", { message: reason, paymentId });
-  } else {
-    renderPayButton();
-    const msg = `${reason} Your payment ID is ${paymentId}. Do not pay again. Tap "Retry confirming payment".`;
-    setMsg(el.payMsg, msg, "bad");
-    showVerify("retry", { message: msg, paymentId });
-  }
-}
-
-/* The backend returns the SAVED teamName / leaderEmail. Only if an older deployed backend omits them do we fall back
-   to the registration snapshot that the backend itself verified against the signed order (payloadHash). */
-function withSavedFallback(res) {
-  const snap = vs.pay.snapshot || {};
-  return { ...res, teamName: res.teamName || snap.teamName || "", leaderEmail: res.leaderEmail || snap.leaderEmail || "" };
 }
 
 /* Second, separate request so the success screen never waits for MailApp. Idempotent on the server. */
@@ -1496,6 +1542,7 @@ function resetRegistrationForm() {
   setText(el.successPayment, "");
   setText(el.successStatus, "");
   setText(el.successNote, "");
+  resetPaymentPanel();
   setHidden(el.payBox, true);
   setMsg(el.payMsg, "");
   el.payBtn.setAttribute("aria-busy", "false");

@@ -176,8 +176,22 @@
             </div>
             <div class="pay-box" id="pay-box" hidden>
         <p class="paylegal">By paying you agree to the <a href="terms.html" target="_blank" rel="noopener">Terms &amp; Conditions</a> and the <a href="refund-policy.html" target="_blank" rel="noopener">Refund &amp; Cancellation Policy</a>. If ES Trainers cancels the tournament, your full registration fee is refunded.</p>
-              <button type="button" class="btn btn--bgmi" id="pay-btn">Pay</button>
+              <button type="button" class="btn btn--bgmi" id="pay-btn">Continue to payment</button>
               <p class="vmsg" id="pay-msg" role="status" aria-live="polite"></p>
+              <!-- Shown after the server has created a pending registration. The fixed-amount Razorpay Payment Button is
+                   mounted into #pb-mount by register-bgmi.js from the EntryFees document that matches the tournament fee. -->
+              <div class="pbpanel" id="pb-panel" hidden>
+                <p class="pbpanel__fee">Entry fee: <strong id="pb-fee"></strong> <span>(fixed for this tournament; it cannot be changed)</span></p>
+                <ol class="pbpanel__steps">
+                  <li>In the payment form, enter <b>exactly</b> this email and phone number so we can match your payment to this team:
+                    <span class="pbpanel__chips"><code id="pb-email"></code><code id="pb-phone"></code></span></li>
+                  <li>If the payment form asks for a registration code, enter <code id="pb-code"></code>.</li>
+                  <li>Pay once. This page confirms your registration automatically after the server verifies the payment. Do not pay twice.</li>
+                </ol>
+                <div class="pbpanel__mount" id="pb-mount"></div>
+                <p class="pbpanel__status" id="pb-status" role="status" aria-live="polite"></p>
+                <button type="button" class="btn btn--ghost" id="pb-restart" hidden>Start a new payment session</button>
+              </div>
             </div>
           </div>
         </form>

@@ -615,3 +615,22 @@ body:has(dialog[open]) { overflow: hidden; }
 
 .paylegal { margin: 0 0 .8rem; font-size: 13px; line-height: 1.5; color: var(--ink-soft, #565e6d); }
 .paylegal a { color: var(--blue, #1652f0); font-weight: 600; }
+
+
+/* ==========================================================
+   Razorpay Payment Button panel (shown after the server created the pending registration)
+   ========================================================== */
+.pbpanel { margin-top: 14px; padding: 16px; border: 1px solid var(--line, #d8dee9); border-radius: 12px; background: var(--surface, #f6f8fc); display: grid; gap: 12px; min-width: 0; }
+.pbpanel[hidden] { display: none; }
+.pbpanel__fee { margin: 0; font-size: 15px; }
+.pbpanel__fee span { color: var(--ink-faint, #667085); font-size: 13px; }
+.pbpanel__steps { margin: 0; padding-left: 1.2rem; display: grid; gap: 8px; font-size: 14px; line-height: 1.5; color: var(--ink-soft, #475467); }
+.pbpanel__chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pbpanel code { font: 600 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding: 3px 8px; border-radius: 6px; background: #fff; border: 1px solid var(--line, #d8dee9); color: var(--ink, #101828); overflow-wrap: anywhere; user-select: all; }
+.pbpanel__mount { min-height: 56px; display: grid; justify-items: start; overflow-x: auto; max-width: 100%; }
+.pbpanel__status { margin: 0; font-size: 14px; font-weight: 600; color: var(--blue-deep, #0a2a8a); }
+.pbpanel__status.is-bad { color: #b42318; }
+.pbpanel__status::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 50%; background: currentColor; opacity: .7; animation: pbpulse 1.6s ease-in-out infinite; }
+.pbpanel__status.is-bad::before, .pbpanel__status.is-idle::before { animation: none; }
+@keyframes pbpulse { 0%, 100% { opacity: .25; } 50% { opacity: .9; } }
+@media (prefers-reduced-motion: reduce) { .pbpanel__status::before { animation: none; } }
