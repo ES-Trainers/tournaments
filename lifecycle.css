@@ -1,0 +1,37 @@
+/* ES TRAINERS — BGMI "Coming Soon" section (lifecycle.css)
+   The tournament card itself lives in tournament-card.css. */
+
+/* ---- BGMI Coming Soon (shown when there is no active tournament) ---- */
+.csoon {
+  position: relative; overflow: hidden; isolation: isolate; grid-column: 1 / -1;
+  display: grid; align-items: center; min-height: 300px;
+  padding: clamp(2rem, 5vw, 3.4rem) clamp(1.2rem, 4vw, 3rem);
+  color: #eef8f4; text-align: left;
+  border: 1px solid rgba(63, 224, 168, 0.4);
+  background: radial-gradient(110% 90% at 0% 0%, rgba(63, 224, 168, 0.14), transparent 55%), linear-gradient(160deg, #08131f, #050a14 65%, #030706);
+  clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 26px 100%, 0 calc(100% - 26px));
+  box-shadow: 0 18px 44px rgba(63, 224, 168, 0.12);
+}
+.csoon[hidden] { display: none; }
+.csoon__art { position: absolute; inset: 0 0 0 auto; width: 52%; z-index: -1; opacity: 0.85; pointer-events: none;
+  -webkit-mask-image: linear-gradient(to left, #000 50%, transparent); mask-image: linear-gradient(to left, #000 50%, transparent); }
+.csoon__art svg { display: block; width: 100%; height: 100%; }
+.csoon::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: 0.05; background: repeating-linear-gradient(0deg, #fff 0 1px, transparent 1px 4px); }
+.csoon__body { max-width: 560px; }
+.csoon__badge { display: inline-block; padding: 0.3rem 1rem 0.3rem 0.7rem; font-weight: 700; font-size: 0.78rem; letter-spacing: 0.22em; color: #03120d; background: #3fe0a8; clip-path: polygon(0 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+.csoon__title { margin: 1rem 0 0.7rem; font-family: var(--font-display, "Space Grotesk", system-ui, sans-serif); text-transform: uppercase; font-size: clamp(1.8rem, 5vw, 3rem); line-height: 1.05; color: #fff; }
+.csoon__title em { display: block; font-style: normal; color: #3fe0a8; text-shadow: 0 0 26px rgba(63, 224, 168, 0.4); }
+.csoon__text { margin: 0 0 0.5rem; color: #cfe3da; max-width: 46ch; }
+.csoon__sub { margin: 0; color: #a3bbb2; font-size: 0.92rem; max-width: 50ch; }
+.csoon__actions { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 1.3rem; }
+.csoon__btn { display: inline-block; padding: 0.7rem 1.2rem; font-weight: 700; font-size: 0.86rem; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; color: #eaf7f1; border: 1px solid rgba(63, 224, 168, 0.5); background: rgba(63, 224, 168, 0.08);
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px)); transition: background 180ms ease, transform 180ms ease; }
+.csoon__btn:hover { background: rgba(63, 224, 168, 0.22); transform: translateY(-2px); }
+.csoon__btn--wa { background: #3fe0a8; color: #03120d; border-color: #3fe0a8; }
+.csoon__btn--wa:hover { background: #86f5d3; }
+.csoon__btn:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+.csoon__bar { margin-top: 1.6rem; width: min(260px, 70%); height: 4px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.csoon__bar i { display: block; height: 100%; width: 40%; background: linear-gradient(90deg, transparent, #3fe0a8, transparent); animation: csBar 2.8s ease-in-out infinite; }
+@keyframes csBar { from { transform: translateX(-110%); } to { transform: translateX(290%); } }
+@media (max-width: 760px) { .csoon__art { width: 100%; opacity: 0.28; } }
+@media (prefers-reduced-motion: reduce) { .csoon__bar i { animation: none; } .csoon__btn { transition: none; } }
