@@ -60,7 +60,7 @@ const BGMI_FIREBASE = {
    Used as a fallback only; the backend returns the key it created the order with. */
 
 // Deploy 7
-const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbz-rEZZ-ZzXs5hOxri9-VRY4Qpb8rSoJnGbGiDnBsxPSZ25kNMAtFlRafbM2fnHShnA/exec";
+const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycby_UxZbb-kOyGN62iHsll6KHXuFDbcR5Z6529XCkZ0W2U_tplxadcn0GqPMwLOcqs6Y/exec";
 
 
 /* ---- 2. Small helpers ---- */
@@ -212,6 +212,8 @@ const el = {
   verifyIssuesList: byId("verify-issues-list"),
   payBox: byId("pay-box"),
   payBtn: byId("pay-btn"),
+  payLabel: byId("pay-label"),
+  payAmt: byId("pay-amt"),
   payMsg: byId("pay-msg"),
   pbPanel: byId("pb-panel"),
   pbFee: byId("pb-fee"),
@@ -387,18 +389,48 @@ const GENDERS = ["Male", "Female", "Other"];
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const UID_RE = /^\d{8,12}$/;
 
-/* Identical rules to normalizePhone_ in Code.gs: Indian mobile numbers only; +91 / 91 / 0091 / 0 prefixes and
-   spaces, hyphens, dots, brackets are accepted; anything invalid or ambiguous returns null (never silently "fixed"). */
+/* Identical rules to normalizePhone_ in Code.gs: Indian mobile numbers only. Accepted: 7069331761, +917069331761, 917069331761
+   (spaces / hyphens allowed). Wrong length, other country codes, a doubled +91 or anything malformed returns null, never "fixed". */
 function normalizePhone(value) {
   if (value === undefined || value === null) return null;
   const s = String(value).trim();
-  if (!/^[+\d\s().\-]+$/.test(s) || s.indexOf("+") > 0 || (s.match(/\+/g) || []).length > 1) return null;
-  let d = s.replace(/[^\d+]/g, "");
+  if (!/^\+?[\d\s-]+$/.test(s)) return null;
+  let d = s.replace(/[\s-]/g, "");
   if (d.charAt(0) === "+") { if (d.indexOf("+91") !== 0) return null; d = d.slice(3); }
-  else if (d.indexOf("0091") === 0 && d.length === 14) d = d.slice(4);
-  else if (d.indexOf("91") === 0 && d.length === 12) d = d.slice(2);
-  else if (d.charAt(0) === "0" && d.length === 11) d = d.slice(1);
+  else if (d.length === 12 && d.indexOf("91") === 0) d = d.slice(2);
   return /^[6-9]\d{9}$/.test(d) ? d : null;
+}
+/* The one canonical format sent to the server and stored: +91XXXXXXXXXX. */
+function canonicalPhone(value) {
+  const n = normalizePhone(value);
+  return n ? `+91${n}` : null;
+}
+/* Display only (review screen): +91 70693 31761 */
+function formatPhoneDisplay(value) {
+  const n = normalizePhone(value);
+  return n ? `+91 ${n.slice(0, 5)} ${n.slice(5)}` : "";
+}
+/* The +91 prefix is part of the page, not of the input, so it cannot be edited or removed. The input holds digits only.
+   "+" and other characters are dropped; a typed or pasted "+91…" / "91…" number (12 digits) is reduced to its 10 digits; nothing is
+   ever silently cut: an 11 or 13 digit entry stays visible so validation reports it instead of accepting a wrong number. */
+function sanitizePhoneInput(raw) {
+  let d = String(raw || "").replace(/\D/g, "");
+  if (d.length === 12 && d.indexOf("91") === 0) d = d.slice(2);
+  return d.slice(0, 13);
+}
+function initPhoneField() {
+  const input = byId("p1-phone");
+  input.addEventListener("input", () => {
+    const clean = sanitizePhoneInput(input.value);
+    if (clean !== input.value) input.value = clean;
+  });
+  input.addEventListener("paste", (event) => {
+    const text = event.clipboardData && event.clipboardData.getData("text");
+    if (typeof text !== "string") return;
+    event.preventDefault();
+    input.value = sanitizePhoneInput(text);
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+  });
 }
 const PHONE_TAKEN_MESSAGE = "This phone number is already registered for this tournament. Each phone number can only be used for one team registration.";
 
@@ -452,7 +484,7 @@ function validateAll() {
 
   const phone = val("p1-phone");
   if (!phone) set("p1-phone", "Enter the leader's phone number.");
-  else if (!normalizePhone(phone)) set("p1-phone", "Enter a valid 10-digit Indian mobile number.");
+  else if (!normalizePhone(phone)) set("p1-phone", "Enter exactly 10 digits of an Indian mobile number (+91 is added automatically).");
 
   return errors;
 }
@@ -547,7 +579,7 @@ function buildReview() {
     ];
     if (n === 1) {
       rows.push(["Email", val("p1-email").toLowerCase()]);
-      rows.push(["Phone", normalizePhone(val("p1-phone"))]);
+      rows.push(["Phone", formatPhoneDisplay(val("p1-phone"))]);
     }
     addBlock(box, n === 1 ? "Player 1 — Team Leader" : n === 5 ? "Player 5 — Substitute" : `Player ${n}`, rows);
   });
@@ -627,6 +659,7 @@ function initDialogs() {
 }
 
 function initForm() {
+  initPhoneField();
   el.form.addEventListener("submit", onSubmit);
   el.form.addEventListener("focusout", onFieldBlur);
   el.form.addEventListener("input", onFieldInput);
@@ -745,7 +778,7 @@ function registrationSnapshot() {
   return {
     teamName: val("team-name"),
     leaderEmail: normEmail(val("p1-email")),
-    leaderPhone: normalizePhone(val("p1-phone")),
+    leaderPhone: canonicalPhone(val("p1-phone")),
     players,
     rulesAccepted: state.rulesAccepted,
   };
@@ -922,8 +955,9 @@ function applyLock() {
   [el.reviewBtn, el.openRules].forEach((b) => { if (b.disabled !== lock) b.disabled = lock; });
   const vt = lock || vs.team.busy;
   if (el.verifyTeamBtn.disabled !== vt) el.verifyTeamBtn.disabled = vt;
-  const pb = vs.pay.busy || vs.pay.done;
+  const pb = vs.pay.busy || vs.pay.done || !!vs.pay.paid;
   if (el.payBtn.disabled !== pb) el.payBtn.disabled = pb;
+  syncPayBtn();
 }
 
 function renderTeamButton() {
@@ -932,9 +966,30 @@ function renderTeamButton() {
   applyLock();
 }
 
-function renderPayButton() {
+/* Payment button: visual state only. It never starts, changes or verifies a payment. */
+const PAY_BTN_LABELS = {
+  idle: "Proceed to Secure Payment",
+  processing: "Preparing secure payment…",
+  verifying: "Verifying your payment…",
+  success: "Payment confirmed",
+};
+function payBtnState() {
+  if (vs.pay.done) return "success";
+  if (vs.pay.paid) return "verifying";
+  if (vs.pay.busy) return "processing";
+  return "idle";
+}
+function syncPayBtn() {
+  const s = payBtnState();
+  if (el.payBtn.dataset.state !== s) el.payBtn.dataset.state = s;
+  setText(el.payLabel, PAY_BTN_LABELS[s]);
   const t = state.tournament;
-  setText(el.payBtn, t && t.feeInr ? `Continue to payment · ₹${t.feeInr.toLocaleString("en-IN")}` : "Continue to payment");
+  setText(el.payAmt, t && t.feeInr ? `₹${t.feeInr.toLocaleString("en-IN")}` : "");
+  setHidden(el.payAmt, !(t && t.feeInr) || s !== "idle");
+  el.payBtn.setAttribute("aria-label", t && t.feeInr && s === "idle" ? `${PAY_BTN_LABELS.idle}, ₹${t.feeInr.toLocaleString("en-IN")}` : PAY_BTN_LABELS[s]);
+}
+function renderPayButton() {
+  syncPayBtn();
 }
 
 function showIssues(issues) {
@@ -1032,7 +1087,7 @@ async function onVerifyTeam() {
       try {
         const user = auth.currentUser;
         const idToken = await user.getIdToken();
-        const res = await callBackend({ action: "checkPhone", tournamentId: readTournamentId(), idToken, leaderEmail: normEmail(val("p1-email")), leaderPhone: normalizePhone(val("p1-phone")) });
+        const res = await callBackend({ action: "checkPhone", tournamentId: readTournamentId(), idToken, leaderEmail: normEmail(val("p1-email")), leaderPhone: canonicalPhone(val("p1-phone")) });
         if (res && res.ok && res.phoneAvailable === false) issues.push({ text: PHONE_TAKEN_MESSAGE, focus: "p1-phone" });
         else if (!res || !res.ok) issues.push({ text: (res && res.error) || "Could not check the phone number right now. Please try again.", focus: "p1-phone" });
       } catch (err) {
@@ -1235,7 +1290,7 @@ function openCheckout() {
     name: "ES Trainers",
     description: `BGMI entry fee · ${reg.teamName}`.slice(0, 120),
     image: "https://estrainers.in/assets/logo/logo.png",
-    prefill: { name: leader.name || "", email: reg.leaderEmail, contact: reg.leaderPhone ? `+91${reg.leaderPhone}` : "" },
+    prefill: { name: leader.name || "", email: reg.leaderEmail, contact: reg.leaderPhone || "" }, /* already canonical +91XXXXXXXXXX */
     theme: { color: "#0a2a8a" },
     retry: { enabled: true },
     modal: { confirm_close: true, ondismiss: onCheckoutDismissed },
@@ -1256,6 +1311,8 @@ function onCheckoutPaid(response) {
   setHidden(el.pbReopen, true);
   setHidden(el.pbRestart, true);
   setPbStatus("Payment received. Waiting for the server to confirm your registration…");
+  setHidden(el.payBtn, false);
+  applyLock();
   confirmPaid();
 }
 
