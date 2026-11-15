@@ -60,7 +60,7 @@ const BGMI_FIREBASE = {
    Used as a fallback only; the backend returns the key it created the order with. */
 
 // Deploy 7
-const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbzpdq9cF5okR0MwJ-udxgBDT0Uvw7Jh3QpcklVzSdnCx2YUcEZV2NzoL2CnleIVasOZ/exec";
+const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbz-rEZZ-ZzXs5hOxri9-VRY4Qpb8rSoJnGbGiDnBsxPSZ25kNMAtFlRafbM2fnHShnA/exec";
 
 
 /* ---- 2. Small helpers ---- */
