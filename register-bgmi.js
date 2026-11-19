@@ -669,6 +669,8 @@ function initForm() {
   el.checkNameBtn.addEventListener("click", onCheckName);
   el.verifyAccountBtn.addEventListener("click", onVerifyAccount);
   el.verifyTeamBtn.addEventListener("click", onVerifyTeam);
+  initSwipePay(); /* must register before onPay so it can swallow real pointer clicks */
+  initButtonLoadingStyle();
   el.payBtn.addEventListener("click", onPay);
   el.pbRestart.addEventListener("click", restartPaymentSession);
   el.pbReopen.addEventListener("click", openCheckout);
@@ -968,9 +970,9 @@ function renderTeamButton() {
 
 /* Payment button: visual state only. It never starts, changes or verifies a payment. */
 const PAY_BTN_LABELS = {
-  idle: "Proceed to Secure Payment",
+  idle: "Swipe to pay",
   processing: "Preparing secure payment…",
-  verifying: "Verifying your payment…",
+  verifying: "Verifying payment…",
   success: "Payment confirmed",
 };
 function payBtnState() {
@@ -985,9 +987,129 @@ function syncPayBtn() {
   setText(el.payLabel, PAY_BTN_LABELS[s]);
   const t = state.tournament;
   setText(el.payAmt, t && t.feeInr ? `₹${t.feeInr.toLocaleString("en-IN")}` : "");
-  setHidden(el.payAmt, !(t && t.feeInr) || s !== "idle");
-  el.payBtn.setAttribute("aria-label", t && t.feeInr && s === "idle" ? `${PAY_BTN_LABELS.idle}, ₹${t.feeInr.toLocaleString("en-IN")}` : PAY_BTN_LABELS[s]);
+  setHidden(el.payAmt, !(t && t.feeInr));
+  el.payBtn.setAttribute("aria-label", t && t.feeInr && s === "idle" ? `${PAY_BTN_LABELS.idle}, ₹${t.feeInr.toLocaleString("en-IN")}. Press Enter or Space to pay.` : PAY_BTN_LABELS[s]);
 }
+/* ---- Swipe-to-pay (input + presentation ONLY) ----
+   The swipe never starts a payment by itself. When it completes (or Enter/Space is pressed) it dispatches a click on #pay-btn, which
+   runs the existing onPay handler: the same order creation, Checkout, server verification and recovery as before. Real pointer
+   clicks on the control are swallowed, so a plain tap or click cannot pay; only a completed swipe or the keyboard can.
+   onPay's own guards (busy / pending / done) and the `fired` latch below prevent a second initiation. */
+function initSwipePay() {
+  const root = el.payBtn;
+  const thumb = root.querySelector(".swipe__thumb");
+  if (!thumb) return;
+  const THRESHOLD = 0.85;
+  let disabled = false;
+  Object.defineProperty(root, "disabled", { configurable: true, get: () => disabled, set: (v) => { disabled = !!v; root.setAttribute("aria-disabled", disabled ? "true" : "false"); } });
+  let x = 0, max = 0, startX = 0, startOffset = 0, pointerId = null, dragging = false, fired = false, lastState = "idle", errTimer = 0;
+  const measure = () => {
+    const pad = parseFloat(getComputedStyle(root).getPropertyValue("--pad")) || 4;
+    max = Math.max(0, root.clientWidth - thumb.offsetWidth - pad * 2);
+    return max;
+  };
+  const setX = (v) => {
+    x = Math.min(Math.max(v, 0), max);
+    root.style.setProperty("--x", `${x}px`);
+    root.style.setProperty("--p", max ? (x / max).toFixed(3) : "0");
+  };
+  const resetThumb = () => { root.classList.remove("is-complete"); measure(); setX(0); };
+  const flashError = () => {
+    root.dataset.error = "true";
+    clearTimeout(errTimer);
+    errTimer = setTimeout(() => { delete root.dataset.error; }, 3500);
+  };
+  const clearError = () => { clearTimeout(errTimer); delete root.dataset.error; };
+
+  /* Hand over to the existing, trusted payment initiation handler. */
+  const trigger = () => {
+    if (fired || disabled || root.dataset.state !== "idle") return;
+    fired = true;
+    clearError();
+    root.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    if (root.dataset.state === "idle") { /* onPay declined (for example registration closed): nothing started, so go back */
+      fired = false;
+      resetThumb();
+      flashError();
+    }
+  };
+  const complete = () => { measure(); setX(max); root.classList.add("is-complete"); trigger(); };
+
+  /* A real tap/click (pointer) must never pay: swallow it before onPay (registered after this listener) can see it. */
+  root.addEventListener("click", (event) => {
+    if (event.isTrusted && event.detail > 0) { event.stopImmediatePropagation(); event.preventDefault(); }
+  }, true);
+  root.addEventListener("contextmenu", (event) => event.preventDefault());
+
+  thumb.addEventListener("pointerdown", (event) => {
+    if (disabled || fired || root.dataset.state !== "idle") return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    measure();
+    dragging = true;
+    pointerId = event.pointerId;
+    startX = event.clientX;
+    startOffset = x;
+    try { thumb.setPointerCapture(pointerId); } catch (e) { /* not fatal */ }
+    root.classList.add("is-dragging");
+    clearError();
+    event.preventDefault();
+  });
+  thumb.addEventListener("pointermove", (event) => {
+    if (!dragging || event.pointerId !== pointerId) return;
+    setX(startOffset + event.clientX - startX);
+  });
+  const endDrag = (event, cancelled) => {
+    if (!dragging || event.pointerId !== pointerId) return;
+    dragging = false;
+    root.classList.remove("is-dragging");
+    try { thumb.releasePointerCapture(pointerId); } catch (e) { /* ignore */ }
+    if (!cancelled && max > 0 && x / max >= THRESHOLD) complete(); else setX(0);
+  };
+  thumb.addEventListener("pointerup", (event) => endDrag(event, false));
+  thumb.addEventListener("pointercancel", (event) => endDrag(event, true));
+
+  /* Keyboard: Enter or Space does the same as a completed swipe. */
+  root.addEventListener("keydown", (event) => {
+    if (event.target !== root) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault(); /* also stops Space from scrolling the page */
+      if (event.key === "Enter" && !event.repeat) complete();
+    }
+  });
+  root.addEventListener("keyup", (event) => {
+    if (event.target === root && event.key === " ") { event.preventDefault(); complete(); }
+  });
+
+  /* Keep the thumb in step with the existing payment state (applyLock/syncPayBtn drive data-state and visibility). */
+  const reconcile = () => {
+    const s = root.dataset.state;
+    if (s === "idle") {
+      if (vs.pay.pending) { lastState = s; return; } /* order created, Razorpay Checkout is open: stay put while hidden */
+      if (!dragging && (fired || x > 0 || root.classList.contains("is-complete"))) {
+        const failedStart = lastState === "processing";
+        fired = false;
+        resetThumb();
+        if (failedStart) flashError();
+      }
+    } else if (!dragging) {
+      measure(); setX(max); root.classList.add("is-complete");
+    }
+    lastState = s;
+  };
+  new MutationObserver(reconcile).observe(root, { attributes: true, attributeFilter: ["data-state", "hidden"] });
+  if (window.ResizeObserver) new ResizeObserver(() => { measure(); setX(root.classList.contains("is-complete") ? max : Math.min(x, max)); }).observe(root);
+}
+
+/* Presentation helper for the redesigned form buttons: the existing handlers set text such as "Checking…" or "Verifying…" while a
+   button is busy; mirror that as data-loading so CSS can show a spinner. It changes no behaviour. */
+function initButtonLoadingStyle() {
+  [el.checkNameBtn, el.verifyAccountBtn, el.verifyTeamBtn].forEach((btn) => {
+    const sync = () => { const busy = btn.disabled && /…\s*$/.test(btn.textContent || ""); if (btn.hasAttribute("data-loading") !== busy) btn.toggleAttribute("data-loading", busy); };
+    new MutationObserver(sync).observe(btn, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ["disabled"] });
+    sync();
+  });
+}
+
 function renderPayButton() {
   syncPayBtn();
 }

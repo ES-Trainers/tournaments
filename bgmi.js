@@ -181,7 +181,6 @@ function buildPrizePanel() {
         <h3 class="pz__name" data-p="name"></h3>
         <p class="pz__id">Tournament ID: <code data-p="id"></code></p>
       </div>
-      <div class="pz__pool"><span class="pz__pool-l">Prize pool</span><strong class="pz__pool-v" data-p="pool"></strong></div>
     </div>
     <ol class="pz__podium" data-p="podium"></ol>
     <p class="pz__note" data-p="note" hidden></p>
@@ -201,9 +200,6 @@ function patchPrizePanel(el, v) {
   const p = (n) => el.querySelector(`[data-p="${n}"]`);
   setText(p("name"), v.title);
   setText(p("id"), v.id || "");
-  const pool = p("pool");
-  setText(pool, v.pool || "Prize pool not published yet");
-  pool.classList.toggle("is-empty", !v.pool);
 
   // Podium: real payouts only when verified; otherwise three honest "not published" tiles.
   const podium = p("podium");
@@ -285,14 +281,12 @@ function removeLoader(container) {
   if (loader) loader.remove();
 }
 
-/** Hero CTA: Register Now only when a real registration_open
- *  tournament with a free slot exists before the deadline; otherwise it just scrolls. */
-function updateHeroCta(current) {
+/** Hero CTA: always "Tournament History" (history.html). Registration links live on the individual tournament cards,
+ *  which still show their own registration availability. */
+function updateHeroCta() {
   if (!heroCta) return;
-  const now = Date.now();
-  const open = current.map((t) => buildView(t, now).registerUrl).find(Boolean);
-  setAttr(heroCta, "href", open || "#tournaments");
-  setText(heroCta, open ? "Register now" : "View tournaments");
+  setAttr(heroCta, "href", "history.html");
+  setText(heroCta, "Tournament History");
 }
 
 function render(state) {
