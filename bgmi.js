@@ -22,7 +22,7 @@ import { getFirestore, collection, query, limit, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 import { activeOnly, buildComingSoon, startTicker } from "./lifecycle-ui.js";
 import { parseStartMillis } from "./tournament-lifecycle.js";
-import { buildCard, patchCard, buildView, buildPrizeView, setText, setHidden, setAttr, unwatchCard } from "./tournament-card.js";
+import { buildCard, patchCard, buildView, setText, setHidden, setAttr, unwatchCard } from "./tournament-card.js";
 
 /* ==========================================================
    1. CONFIG
@@ -164,93 +164,6 @@ function syncCards(container, map, items) {
 
 
 /* ==========================================================
-   4b. PRIZE DISTRIBUTION — one panel per current tournament, built once and
-   patched in place from the SAME snapshot (no extra Firebase reads). Everything
-   shown comes from buildPrizeView(): nothing is calculated, guessed or invented.
-   ========================================================== */
-
-const prizePanels = new Map();
-
-function buildPrizePanel() {
-  const el = document.createElement("article");
-  el.className = "pz";
-  el.innerHTML = `
-    <div class="pz__head">
-      <div class="pz__who">
-        <span class="pz__tag">BGMI</span>
-        <h3 class="pz__name" data-p="name"></h3>
-        <p class="pz__id">Tournament ID: <code data-p="id"></code></p>
-      </div>
-    </div>
-    <ol class="pz__podium" data-p="podium"></ol>
-    <p class="pz__note" data-p="note" hidden></p>
-    <div class="pz__block" data-p="rewardsBlock" hidden><h3>Rewards</h3><ul class="pz__list" data-p="rewards"></ul></div>
-    <div class="pz__block" data-p="condBlock" hidden><h3>Prize conditions</h3><ul class="pz__list" data-p="conditions"></ul></div>`;
-  return el;
-}
-
-function fillList(ul, items, render) {
-  const sig = JSON.stringify(items);
-  if (ul.dataset.sig === sig) return;
-  ul.dataset.sig = sig;
-  ul.replaceChildren(...items.map((it) => { const li = document.createElement("li"); render(li, it); return li; }));
-}
-
-function patchPrizePanel(el, v) {
-  const p = (n) => el.querySelector(`[data-p="${n}"]`);
-  setText(p("name"), v.title);
-  setText(p("id"), v.id || "");
-
-  // Podium: real payouts only when verified; otherwise three honest "not published" tiles.
-  const podium = p("podium");
-  const tiles = v.payouts
-    ? v.payouts.map((x) => ({ rank: x.place, label: x.label, amount: x.amount, pending: false }))
-    : [1, 2, 3].map((n) => ({ rank: n, label: n === 1 ? "1st place" : n === 2 ? "2nd place" : "3rd place", amount: "Not published yet", pending: true }));
-  const sig = JSON.stringify(tiles);
-  if (podium.dataset.sig !== sig) {
-    podium.dataset.sig = sig;
-    podium.replaceChildren(...tiles.map((x) => {
-      const li = document.createElement("li");
-      li.className = "pz__place" + (x.pending ? " is-pending" : "");
-      li.dataset.rank = String(x.rank);
-      const r = document.createElement("span"); r.className = "pz__rank"; r.textContent = x.label;
-      const a = document.createElement("strong"); a.className = "pz__amt"; a.textContent = x.amount;
-      li.append(r, a);
-      return li;
-    }));
-  }
-
-  let note = "";
-  if (v.payoutsIssue === "invalid") note = "The winner-wise payout details for this tournament are being checked and are not shown yet.";
-  else if (!v.payouts) note = "Winner-wise payouts have not been published for this tournament. ES Trainers will show them here once they are confirmed.";
-  setText(p("note"), note);
-  setHidden(p("note"), !note);
-
-  setHidden(p("rewardsBlock"), v.rewards.length === 0);
-  fillList(p("rewards"), v.rewards, (li, r) => {
-    const b = document.createElement("b"); b.textContent = r.title; li.appendChild(b);
-    if (r.description) li.appendChild(document.createTextNode(" — " + r.description));
-  });
-  setHidden(p("condBlock"), v.conditions.length === 0);
-  fillList(p("conditions"), v.conditions, (li, c) => { li.textContent = c; });
-}
-
-function syncPrizes(items) {
-  const section = document.getElementById("prize-pool");
-  const gridEl = document.getElementById("prize-grid");
-  if (!section || !gridEl) return;
-  const seen = new Set();
-  items.forEach((t) => {
-    seen.add(t.id);
-    let el = prizePanels.get(t.id);
-    if (!el) { el = buildPrizePanel(); prizePanels.set(t.id, el); gridEl.appendChild(el); }
-    patchPrizePanel(el, buildPrizeView(t));
-  });
-  prizePanels.forEach((el, id) => { if (!seen.has(id)) { el.remove(); prizePanels.delete(id); } });
-  setHidden(section, items.length === 0);
-}
-
-/* ==========================================================
    5. RENDER
    ========================================================== */
 
@@ -296,7 +209,6 @@ function render(state) {
   const down = !state.ok;
 
   syncCards(grid, currentCards, current);
-  syncPrizes(current);
   if (state.loaded) removeLoader(grid);
   setHidden(getBlock(grid, "error", errorBlock("Unable to load BGMI tournament information right now. Please try again later.")),
     !(down && current.length === 0));
