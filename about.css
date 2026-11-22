@@ -15,7 +15,7 @@
   --blue-bright: #5a8dff;
   --blue-wash: #eaf0ff;
 
-  --success: #1f8a4c;
+  --success: #0f3fc0;
 
   
   --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
@@ -401,8 +401,8 @@ p { margin: 0; }
 .whatsapp__icon {
   width: 56px; height: 56px;
   border-radius: var(--radius-md);
-  background: #e9fbf1;
-  color: #1f8a4c;
+  background: var(--blue-wash);
+  color: var(--blue);
   display: flex; align-items: center; justify-content: center;
   margin-bottom: var(--space-3);
 }
@@ -437,7 +437,7 @@ p { margin: 0; }
 .wa-chip__dot {
   width: 8px; height: 8px;
   border-radius: 50%;
-  background: #1f8a4c;
+  background: var(--blue);
   flex-shrink: 0;
 }
 .footer { padding: var(--space-7) 0 var(--space-5); border-top: 1px solid var(--line); }
@@ -587,7 +587,7 @@ p { margin: 0; }
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  border: 1.5px solid rgba(31, 138, 76, 0.45);
+  border: 1.5px solid rgba(22, 82, 240, 0.4);
   animation: attentionPulse 2.6s ease-out infinite;
 }
 @keyframes attentionPulse {

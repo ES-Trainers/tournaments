@@ -15,10 +15,10 @@
   --blue-bright: #5a8dff;
   --blue-wash: #eaf0ff;
 
-  --bgmi: #1f6e5c;
-  --bgmi-deep: #0c2b24;
+  --bgmi: #1652f0;       /* ES Trainers primary blue */
+  --bgmi-deep: #0a1a4a;  /* deep navy */
 
-  --success: #1f8a4c;
+  --success: #0f3fc0;
 
   
   --font-display: "Space Grotesk", "Inter", system-ui, sans-serif;
@@ -292,8 +292,8 @@ p { margin: 0; }
 .whatsapp__icon {
   width: 56px; height: 56px;
   border-radius: var(--radius-md);
-  background: #e9fbf1;
-  color: #1f8a4c;
+  background: var(--blue-wash);
+  color: var(--blue);
   display: flex; align-items: center; justify-content: center;
   margin-bottom: var(--space-3);
 }
@@ -328,7 +328,7 @@ p { margin: 0; }
 .wa-chip__dot {
   width: 8px; height: 8px;
   border-radius: 50%;
-  background: #1f8a4c;
+  background: var(--blue);
   flex-shrink: 0;
 }
 .footer { padding: var(--space-7) 0 var(--space-5); border-top: 1px solid var(--line); }
@@ -419,7 +419,7 @@ p { margin: 0; }
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  border: 1.5px solid rgba(31, 138, 76, 0.45);
+  border: 1.5px solid rgba(22, 82, 240, 0.4);
   animation: attentionPulse 2.6s ease-out infinite;
 }
 @keyframes attentionPulse {
@@ -440,13 +440,14 @@ p { margin: 0; }
   min-height: clamp(520px, 82vh, 700px);
   padding: calc(var(--space-8) + 48px) 0 var(--space-7);
   color: var(--white);
-  background: #030a08;
+  background: #060a14;
 }
 .bgmi-hero__atmosphere {
   position: absolute; inset: 0; z-index: -3;
   background:
-    radial-gradient(120% 90% at 82% 8%, rgba(31,110,92,0.5), transparent 58%),
-    linear-gradient(200deg, var(--bgmi-deep), #030a08 72%);
+    radial-gradient(120% 90% at 82% 8%, rgba(22,82,240,0.52), transparent 58%),
+    radial-gradient(70% 60% at 6% 100%, rgba(9,38,122,0.55), transparent 70%),
+    linear-gradient(200deg, var(--bgmi-deep), #060a14 72%);
 }
 .bgmi-hero__art {
   position: absolute; top: 0; right: 0; z-index: -2;
@@ -470,7 +471,7 @@ p { margin: 0; }
   }
   .bgmi-hero__overlay {
     background:
-      linear-gradient(to right, rgba(3,10,8,0.9) 0%, rgba(3,10,8,0.5) 42%, transparent 70%),
+      linear-gradient(to right, rgba(6,10,20,0.9) 0%, rgba(6,10,20,0.5) 42%, transparent 70%),
       linear-gradient(to top, rgba(3,6,10,0.85) 0%, transparent 45%);
   }
 }

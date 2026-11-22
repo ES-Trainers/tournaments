@@ -26,24 +26,24 @@ export const REGISTER_ROUTE = "register-bgmi.html";
 /* ---------- Original BGMI key art (project-made SVG, not licensed game art) ---------- */
 
 const ART_DEFS = `<linearGradient id="ekSky" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#0f3329"/>
-                <stop offset="45%" stop-color="#071c17"/>
-                <stop offset="100%" stop-color="#030c0a"/>
+                <stop offset="0%" stop-color="#14307e"/>
+                <stop offset="45%" stop-color="#0b1535"/>
+                <stop offset="100%" stop-color="#05080f"/>
               </linearGradient>
               <radialGradient id="ekHaze" cx="70%" cy="26%" r="56%">
-                <stop offset="0%" stop-color="#4fe0b8" stop-opacity="0.26"/>
-                <stop offset="100%" stop-color="#4fe0b8" stop-opacity="0"/>
+                <stop offset="0%" stop-color="#3d73ff" stop-opacity="0.26"/>
+                <stop offset="100%" stop-color="#3d73ff" stop-opacity="0"/>
               </radialGradient>
               <radialGradient id="ekKeyLight" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="#4fe0b8" stop-opacity="0.34"/>
-                <stop offset="100%" stop-color="#4fe0b8" stop-opacity="0"/>
+                <stop offset="0%" stop-color="#3d73ff" stop-opacity="0.34"/>
+                <stop offset="100%" stop-color="#3d73ff" stop-opacity="0"/>
               </radialGradient>
               <linearGradient id="ekDust" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#3fd6ae" stop-opacity="0.16"/>
-                <stop offset="100%" stop-color="#3fd6ae" stop-opacity="0"/>
+                <stop offset="0%" stop-color="#1652F0" stop-opacity="0.16"/>
+                <stop offset="100%" stop-color="#1652F0" stop-opacity="0"/>
               </linearGradient>
               <pattern id="ekScan" width="4" height="4" patternUnits="userSpaceOnUse">
-                <rect width="4" height="1" fill="rgba(143,245,218,0.06)"/>
+                <rect width="4" height="1" fill="rgba(169,196,255,0.06)"/>
               </pattern>
               <radialGradient id="ekVignette" cx="54%" cy="34%" r="76%">
                 <stop offset="50%" stop-color="#000" stop-opacity="0"/>
@@ -77,28 +77,28 @@ const ART_DEFS = `<linearGradient id="ekSky" x1="0" y1="0" x2="0" y2="1">
               </g>`;
 const ART_BODY = `<rect width="480" height="480" fill="url(#ekSky)"/>
             <rect width="480" height="480" fill="url(#ekHaze)"/>
-            <path class="ek-dropline" d="M56 74 264 142" stroke="#5fe9c8" stroke-width="1.2" stroke-dasharray="4 9" fill="none" opacity="0.4"/>
-            <g transform="translate(34,64) rotate(14) scale(0.72)" fill="#bfe9dd" opacity="0.5">
+            <path class="ek-dropline" d="M56 74 264 142" stroke="#5a8dff" stroke-width="1.2" stroke-dasharray="4 9" fill="none" opacity="0.4"/>
+            <g transform="translate(34,64) rotate(14) scale(0.72)" fill="#c9d8ff" opacity="0.5">
               <use href="#ekPlane"/>
             </g>
-            <g fill="#a9ecd9" stroke="#a9ecd9" opacity="0.55">
+            <g fill="#bcd0ff" stroke="#bcd0ff" opacity="0.55">
               <use class="ek-chute" href="#ekChute" transform="translate(104,126)"/>
               <use class="ek-chute" href="#ekChute" transform="translate(156,172) scale(0.7)"/>
               <use class="ek-chute" href="#ekChute" transform="translate(68,194) scale(0.52)"/>
             </g>
-            <path d="M-20 206C22 188 46 160 78 170s44 28 74 8 52-30 88-24 60-30 92-18 56 34 88 22 54-16 80-6V480H-20z" fill="#0d3129" opacity="0.88"/>
-            <path d="M-20 260C32 244 60 212 98 222s56 38 94 26 62-32 100-22 54 36 94 26 68-18 94-10V480H-20z" fill="#082019"/>
+            <path d="M-20 206C22 188 46 160 78 170s44 28 74 8 52-30 88-24 60-30 92-18 56 34 88 22 54-16 80-6V480H-20z" fill="#0f2160" opacity="0.88"/>
+            <path d="M-20 260C32 244 60 212 98 222s56 38 94 26 62-32 100-22 54 36 94 26 68-18 94-10V480H-20z" fill="#0a1536"/>
             <rect x="-20" y="252" width="520" height="150" fill="url(#ekDust)"/>
-            <path d="M-20 324C42 308 86 282 140 296s76 32 122 18 68-28 114-18 76 22 124 14V480H-20z" fill="#04110e"/>
+            <path d="M-20 324C42 308 86 282 140 296s76 32 122 18 68-28 114-18 76 22 124 14V480H-20z" fill="#060c1c"/>
             <ellipse cx="352" cy="224" rx="120" ry="130" fill="url(#ekKeyLight)"/>
             <g transform="translate(352,314)">
-              <use href="#ekTrooper" transform="translate(-4,-4)" fill="#5fe9c8" stroke="#5fe9c8" opacity="0.6"/>
-              <use href="#ekTrooper" fill="#020a08" stroke="#020a08"/>
+              <use href="#ekTrooper" transform="translate(-4,-4)" fill="#5a8dff" stroke="#5a8dff" opacity="0.6"/>
+              <use href="#ekTrooper" fill="#02050c" stroke="#02050c"/>
             </g>
-            <g stroke="#8ff5da" fill="none" opacity="0.45">
+            <g stroke="#a9c4ff" fill="none" opacity="0.45">
               <path d="M32 34h416" stroke-width="1"/>
               <path d="M40 34v9M60 34v5M80 34v5M100 34v5M120 34v9M140 34v5M160 34v5M180 34v5M200 34v9M220 34v5M240 34v5M260 34v5M280 34v9M300 34v5M320 34v5M340 34v5M360 34v9M380 34v5M400 34v5M420 34v5M440 34v9" stroke-width="1.1"/>
-              <path d="M240 22 246 30h-12z" fill="#8ff5da" stroke="none" opacity="0.85"/>
+              <path d="M240 22 246 30h-12z" fill="#a9c4ff" stroke="none" opacity="0.85"/>
               <path d="M320 134h-14v14M392 134h14v14M320 212h-14v-14M392 212h14v-14" stroke-width="1.4"/>
               <path d="M414 150h30M414 158h18" stroke-width="1" opacity="0.6"/>
               <path d="M22 22h28M22 22v28M458 458h-28M458 458v-28" stroke-width="1.4" opacity="0.7"/>
