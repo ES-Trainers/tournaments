@@ -1,5 +1,5 @@
 /* ES Trainers official intro (loaded by intro.js only when the intro plays).
-   Three stages in about 3 seconds: 1) logo + blue glow, 2) blue confetti, 3) dark-blue ribbons, then the site is revealed.
+   Three stages in about 3.2 seconds: 1) logo + blue glow, 2) blue confetti falls away, 3) the centre logo flies up into the navbar logo and replaces it.
    Transform / opacity / stroke-dashoffset animation only. Brand: #1652F0, #0B0F17, white. */
 .es-intro { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: center; overflow: hidden; background: #fff; contain: layout paint; cursor: pointer; opacity: 1; }
 .es-intro--out { opacity: 0; transition: opacity .45s ease; pointer-events: none; }
@@ -28,10 +28,11 @@
   100% { opacity: 1; transform: translate3d(var(--dx), 118vh, 0) rotateZ(var(--r)) rotateX(620deg); }
 }
 
-/* Stage 3: dark-blue multi-strand ribbons sweeping in from different directions (they weave around the logo) */
-.es-intro__ribbons { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-.es-intro__ribbons path { fill: none; stroke-linecap: round; stroke-dasharray: .42 2; stroke-dashoffset: .42; }
-.es-intro--go .es-intro__ribbons path { animation: esiRibbon .95s cubic-bezier(.45, .05, .35, 1) var(--t) forwards; }
-@keyframes esiRibbon { from { stroke-dashoffset: .42; } to { stroke-dashoffset: -1; } }
+/* Stage 3: logo flight into the navbar (the movement itself is a Web Animation started by intro.js) */
+html.es-intro-on .nav .brand__mark { opacity: 0; } /* real navbar logo stays hidden until the flying logo lands on it */
+.es-intro--fly { background-color: rgba(255, 255, 255, 0); transition: background-color .8s ease .05s; }
+.es-intro--go.es-intro--fly .es-intro__glow { animation: esiGlowOut .7s ease forwards; }
+.es-intro--fly .es-intro__logo { will-change: transform; }
+@keyframes esiGlowOut { from { opacity: .9; transform: scale(1.12); } to { opacity: 0; transform: scale(1.3); } }
 
 @media (prefers-reduced-motion: reduce) { .es-intro { display: none; } }

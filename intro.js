@@ -1,7 +1,7 @@
 /* ES Trainers official website intro.
    Plays ONCE per browsing session: the first page a visitor opens shows a short (about 3 s) brand animation; refreshes and every
    other page of the site do not replay it. It is a plain script (not a module) that runs right after <body> opens so the white
-   overlay is there before the first paint, then it loads intro.css and starts the CSS animation.
+   overlay is there before the first paint, then it loads intro.css and starts the CSS animation. Final stage: the centre logo flies into the navbar logo and replaces it.
    Safe by design: no storage / reduced motion / any error = no intro, and the site is never blocked (the overlay is removed by a
    timer no matter what). It touches no site data, no Firebase and no other script. */
 (function () {
@@ -28,29 +28,50 @@
     document.removeEventListener("keydown", onKey, true);
     window.removeEventListener("pagehide", finish);
     root.style.overflow = prevOverflow;
+    root.classList.remove("es-intro-on");
     if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
   }
   function out() {
     if (finished || !overlay) return;
+    root.classList.remove("es-intro-on");
     overlay.classList.add("es-intro--out");
     later(finish, 520);
+  }
+  /* Final stage: the centre logo travels to the navbar logo, lands exactly on it, then the overlay is removed so it looks like the
+     intro logo has become the navbar logo. Falls back to a plain fade-out if anything is missing. */
+  function fly() {
+    if (finished || !overlay) return;
+    var logo = overlay.querySelector(".es-intro__logo");
+    var target = document.querySelector(".nav .brand__mark");
+    if (!logo || !target || !logo.animate) { out(); return; }
+    var from = logo.getBoundingClientRect(), to = target.getBoundingClientRect();
+    if (!from.width || !to.width) { out(); return; }
+    var dx = (to.left + to.width / 2) - (from.left + from.width / 2);
+    var dy = (to.top + to.height / 2) - (from.top + from.height / 2);
+    var sc = to.width / from.width;
+    overlay.classList.add("es-intro--fly"); /* white fades away, glow fades away, site appears underneath */
+    var anim = logo.animate([
+      { transform: "translate(0px,0px) scale(1)", boxShadow: "0 14px 44px rgba(22,82,240,.3), 0 0 0 1px rgba(22,82,240,.08)" },
+      { transform: "translate(" + dx.toFixed(2) + "px," + dy.toFixed(2) + "px) scale(" + sc.toFixed(4) + ")", boxShadow: "0 0 0 0 rgba(22,82,240,0), 0 0 0 0 rgba(22,82,240,0)" }
+    ], { duration: 900, easing: "cubic-bezier(.65,0,.2,1)", fill: "forwards" });
+    function land() {
+      if (finished) return;
+      root.classList.remove("es-intro-on"); /* real navbar logo shows, exactly under the flying one */
+      requestAnimationFrame(finish);        /* then the overlay disappears: no visible jump */
+    }
+    anim.onfinish = land;
+    later(land, 1100); /* safety if onfinish never fires */
   }
   function onKey(e) { if (e.key === "Escape" || e.key === "Enter" || e.key === " ") out(); }
 
   var PALETTE = ["#1652F0", "#1652F0", "#3d73ff", "#5a8dff", "#09267A", "#0d1d52", "#0B0F17", "#123dbf"];
-  var RIBBONS = [ /* [path, strand colours, start delay (s)] ; directions differ: left>right, right>left, top>bottom, bottom>top */
-    ["M-100 190 C250 40 520 330 1100 150", ["#0B0F17", "#09267A", "#123dbf"], 1.35],
-    ["M1100 830 C760 990 330 700 -100 880", ["#061030", "#0a2a8f", "#0d1d52"], 1.45],
-    ["M190 -100 C40 300 330 650 110 1100", ["#0d1d52", "#0B0F17", "#09267A"], 1.55],
-    ["M890 1100 C1010 700 700 350 870 -100", ["#09267A", "#061030", "#123dbf"], 1.5],
-    ["M1100 30 C800 140 420 -50 -100 120", ["#123dbf", "#0B0F17", "#0a2a8f"], 1.65]
-  ];
   function el(tag, cls, ns) { var e = ns ? document.createElementNS(ns, tag) : document.createElement(tag); if (cls) e.setAttribute("class", cls); return e; }
   function rnd(a, b) { return a + Math.random() * (b - a); }
 
   try {
     prevOverflow = root.style.overflow;
     root.style.overflow = "hidden";
+    root.classList.add("es-intro-on");
     overlay = el("div", "es-intro");
     /* inline minimum so the page is covered immediately, before intro.css has loaded */
     overlay.style.cssText = "position:fixed;inset:0;z-index:2147483000;background:#fff;overflow:hidden";
@@ -70,26 +91,11 @@
       s.setProperty("--r", Math.round(rnd(300, 900) * (Math.random() < .5 ? -1 : 1)) + "deg");
       s.setProperty("--w", w.toFixed(1) + "px"); s.setProperty("--h", h.toFixed(1) + "px");
       s.setProperty("--c", PALETTE[(Math.random() * PALETTE.length) | 0]);
-      s.setProperty("--d", rnd(1.2, 1.95).toFixed(2) + "s");
-      s.setProperty("--t", rnd(.55, 1.2).toFixed(2) + "s");
+      s.setProperty("--d", rnd(1.1, 1.45).toFixed(2) + "s");
+      s.setProperty("--t", rnd(.35, .8).toFixed(2) + "s");
       conf.appendChild(p);
     }
     overlay.appendChild(conf);
-
-    var NS = "http://www.w3.org/2000/svg";
-    var svg = el("svg", "es-intro__ribbons", NS);
-    svg.setAttribute("viewBox", "0 0 1000 1000"); svg.setAttribute("preserveAspectRatio", "xMidYMid slice");
-    RIBBONS.forEach(function (r, k) {
-      r[1].forEach(function (col, j) {
-        var path = el("path", "", NS);
-        path.setAttribute("d", r[0]); path.setAttribute("pathLength", "1");
-        path.setAttribute("stroke", col); path.setAttribute("stroke-width", String(34 - j * 7));
-        path.setAttribute("transform", "translate(" + (j * 9) + "," + (j * 11) + ")");
-        path.style.setProperty("--t", (r[2] + j * 0.06 + k * 0.01).toFixed(2) + "s");
-        svg.appendChild(path);
-      });
-    });
-    overlay.appendChild(svg);
 
     var img = el("img", "es-intro__logo");
     img.src = "assets/logo/logo.png"; img.alt = ""; img.width = 210; img.height = 210; img.decoding = "async";
@@ -106,11 +112,11 @@
       if (finished) return;
       overlay.removeAttribute("style"); /* intro.css takes over */
       overlay.classList.add("es-intro--go");
-      later(out, 2550); /* about 2.6 s of animation, then a 0.45 s fade into the site */
+      later(fly, 2300); /* logo + confetti for about 2.3 s, then the logo flies to the navbar (0.9 s) */
     };
     link.onerror = finish;
     document.head.appendChild(link);
     later(function () { if (!overlay.classList.contains("es-intro--go")) finish(); }, 1800); /* stylesheet never arrived */
-    later(finish, 4500); /* absolute safety net */
+    later(finish, 5500); /* absolute safety net */
   } catch (e) { finish(); }
 })();
