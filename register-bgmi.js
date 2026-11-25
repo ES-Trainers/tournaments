@@ -60,7 +60,7 @@ const BGMI_FIREBASE = {
 };
 
 // Deploy 7
-const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbxjfJHM8U2uIFXSPPto92UcIVV3yZIZvldZhP5O2kwgtxjr7WZ8XJEUqTSciLt4piDE/exec";
+const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbxOmncUJnhhiHp6kO2Ln4eONvuDuMBBiKTuIDJK1LM8cw-8dLKmka3j_uhpcPVUU3uU/exec";
 
 
 /* ---- 2. Small helpers ---- */
