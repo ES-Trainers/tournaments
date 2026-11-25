@@ -12,12 +12,15 @@
    - Verify Account: Firebase Google sign-in, then reads
      tournaments/<id>/leaderEmails/<sha256 key>.
    - Verify Team: re-runs every check fresh (see section 13).
-   - Pay: asks the Apps Script backend for a Razorpay order (the server
-     reads the fee from Firestore), opens Razorpay Checkout, then sends the
-     payment result back so the backend can verify the signature and the
-     payment with Razorpay and save the registration as CONFIRMED (the
-     backend also sends the confirmation email). A refresh or lost response
-     is recovered by asking the server about the order.
+   - Pay: reads EntryFees/<entry fee> from Firestore and validates it
+     (exists, active, amount = tournament fee, INR, Payment Button id), loads
+     Razorpay's hosted Payment Button for THAT id (hidden), and only then
+     shows the swipe. On swipe the Apps Script backend re-validates
+     everything and stores the registration server-side; the hosted button
+     takes the payment; Razorpay's signed webhook (via the Cloudflare Worker)
+     lets the backend match the captured payment to the registration and save
+     it as CONFIRMED. This page only polls the server for the result. A
+     refresh or closed window is recovered by asking the server.
    - Celebration: only when the backend answers ok + status "confirmed"
      a full-screen ES Trainers overlay appears (animation, then a
      persistent success screen). Continue closes it and resets ONLY the
@@ -26,7 +29,7 @@
    What this file deliberately does NOT do:
    - It never writes registrations or payment status to Firestore.
      Only the Apps Script backend does, after verifying payment.
-   - It never holds a Razorpay secret and never sends a price: the amount is decided by the server from Firestore.
+   - It never holds a Razorpay secret or API key and never sends a price: the amount and the Payment Button id are decided by the server from Firestore (EntryFees).
    ========================================================== */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
@@ -55,9 +58,6 @@ const BGMI_FIREBASE = {
     measurementId: "G-37YDZGRFXR",
   },
 };
-
-/* Razorpay TEST Key ID (public by design, never the secret).
-   Used as a fallback only; the backend returns the key it created the order with. */
 
 // Deploy 7
 const PAYMENT_BACKEND_URL = "https://script.google.com/macros/s/AKfycbxjfJHM8U2uIFXSPPto92UcIVV3yZIZvldZhP5O2kwgtxjr7WZ8XJEUqTSciLt4piDE/exec";
@@ -220,6 +220,12 @@ const el = {
   pbStatus: byId("pb-status"),
   pbRestart: byId("pb-restart"),
   pbReopen: byId("pb-reopen"),
+  pbCheck: byId("pb-check"),
+  pbIds: byId("pb-ids"),
+  pbEmail: byId("pb-email"),
+  pbPhone: byId("pb-phone"),
+  payRetry: byId("pay-retry"),
+  rzpHost: byId("rzp-host"),
   successBox: byId("success-box"),
   successId: byId("success-id"),
   successPayment: byId("success-payment"),
@@ -338,6 +344,8 @@ function renderTournament(data) {
   applyLock();
   renderPayButton();
   if (!eligibility.open && !vs.pay.pending && !vs.pay.done) invalidateTeamVerification();
+  /* The entry fee changed while the page was open: the Payment Button must be looked up again before anyone can pay. */
+  else if (vs.team.verified && !vs.pay.pending && !vs.pay.done && vs.pay.fee.status !== "loading" && vs.pay.fee.feeInr !== t.feeInr) prepareEntryFee();
 }
 
 /* ---- 7. Rules & Terms ---- */
@@ -673,7 +681,9 @@ function initForm() {
   initButtonLoadingStyle();
   el.payBtn.addEventListener("click", onPay);
   el.pbRestart.addEventListener("click", restartPaymentSession);
-  el.pbReopen.addEventListener("click", openCheckout);
+  el.pbReopen.addEventListener("click", reopenPaymentWindow);
+  el.pbCheck.addEventListener("click", onCheckStatus);
+  el.payRetry.addEventListener("click", prepareEntryFee);
   el.vfyRetry.addEventListener("click", onVerifyRetry);
   el.celeSkip.addEventListener("click", showCelebrationFinal);
   el.celeContinue.addEventListener("click", onCelebrationContinue);
@@ -729,7 +739,7 @@ const vs = {
   name: { checked: null, available: null },           // normalized name last checked / found available
   acct: { verifiedEmail: null, registered: null, busy: false },
   team: { fingerprint: null, verified: false, busy: false },
-  pay: { busy: false, pending: null, snapshot: null, order: null, paid: null, done: false, failure: "" },
+  pay: { busy: false, pending: null, snapshot: null, session: null, done: false, failure: "", fee: { status: "idle", feeInr: 0, buttonId: "", message: "" } },
 };
 
 class UserFacingError extends Error {}
@@ -942,6 +952,8 @@ function invalidateTeamVerification() {
   if (vs.pay.pending || vs.pay.done || vs.pay.busy || !vs.team.verified) return;
   vs.team.verified = false;
   vs.team.fingerprint = null;
+  feeRun++; /* abandon any in-flight Payment Button lookup */
+  vs.pay.fee = { status: "idle", feeInr: 0, buttonId: "", message: "" };
   renderTeamButton();
   setHidden(el.payBox, true);
   setMsg(el.payMsg, "");
@@ -957,7 +969,7 @@ function applyLock() {
   [el.reviewBtn, el.openRules].forEach((b) => { if (b.disabled !== lock) b.disabled = lock; });
   const vt = lock || vs.team.busy;
   if (el.verifyTeamBtn.disabled !== vt) el.verifyTeamBtn.disabled = vt;
-  const pb = vs.pay.busy || vs.pay.done || !!vs.pay.paid;
+  const pb = vs.pay.busy || vs.pay.done || !!vs.pay.pending;
   if (el.payBtn.disabled !== pb) el.payBtn.disabled = pb;
   syncPayBtn();
 }
@@ -977,7 +989,7 @@ const PAY_BTN_LABELS = {
 };
 function payBtnState() {
   if (vs.pay.done) return "success";
-  if (vs.pay.paid) return "verifying";
+  if (vs.pay.pending) return "verifying";
   if (vs.pay.busy) return "processing";
   return "idle";
 }
@@ -992,7 +1004,7 @@ function syncPayBtn() {
 }
 /* ---- Swipe-to-pay (input + presentation ONLY) ----
    The swipe never starts a payment by itself. When it completes (or Enter/Space is pressed) it dispatches a click on #pay-btn, which
-   runs the existing onPay handler: the same order creation, Checkout, server verification and recovery as before. Real pointer
+   runs the existing onPay handler: the same server session creation, hosted Payment Button and server verification. Real pointer
    clicks on the control are swallowed, so a plain tap or click cannot pay; only a completed swipe or the keyboard can.
    onPay's own guards (busy / pending / done) and the `fired` latch below prevent a second initiation. */
 function initSwipePay() {
@@ -1084,7 +1096,7 @@ function initSwipePay() {
   const reconcile = () => {
     const s = root.dataset.state;
     if (s === "idle") {
-      if (vs.pay.pending) { lastState = s; return; } /* order created, Razorpay Checkout is open: stay put while hidden */
+      if (vs.pay.pending) { lastState = s; return; } /* payment session created, Razorpay window open: stay put while hidden */
       if (!dragging && (fired || x > 0 || root.classList.contains("is-complete"))) {
         const failedStart = lastState === "processing";
         fired = false;
@@ -1226,7 +1238,7 @@ async function onVerifyTeam() {
       setMsg(el.payMsg, "");
       renderPayButton();
       setHidden(el.payBox, false);
-      loadCheckoutScript().catch(() => {}); /* pre-load the Razorpay window; onPay reports a clear message if it cannot load */
+      prepareEntryFee(); /* Firestore EntryFees check; the swipe appears only if it passes */
     }
   } catch (err) {
     console.error("Verify Team failed", err);
@@ -1238,16 +1250,24 @@ async function onVerifyTeam() {
   showIssues(issues);
 }
 
-/* ---- Feature 4: Payment (Razorpay Orders + Checkout, confirmed by the Apps Script backend) ----
-   1. Verify Team + Google verification -> "Continue to payment".
-   2. The backend re-validates everything, reads the entry fee from Firestore, creates the Razorpay order and stores this
-      registration on the SERVER (pendingOrders). The browser only receives the order id, amount and public key id.
-   3. Razorpay Checkout opens for that order. The player pays inside Razorpay.
-   4. Checkout hands back order id / payment id / signature. They are sent to the backend, which verifies the signature,
-      re-reads the payment from Razorpay's API, re-checks tournament, deadline, capacity and duplicates and saves the registration.
-      The Cloudflare webhook is a second, independent route to the same idempotent server step.
-   5. Success is shown ONLY when the server answers "confirmed". A Checkout callback alone is never proof of payment.
-   6. A refresh, a closed window or a lost response is recovered by asking the server about the order (checkPaymentStatus). */
+/* ---- Feature 4: Payment (Razorpay HOSTED Payment Button, confirmed by the Apps Script backend) ----
+   1. Verify Team + Google verification.
+   2. The page reads EntryFees/<entry fee> from Firestore and checks it: the document exists, is active, its amount equals the
+      tournament's fee, the currency is INR and it holds a Payment Button id. Only then does the swipe appear, and only then is
+      Razorpay's official payment-button.js loaded (hidden) for THAT id. Any failure blocks payment. There is no fallback button.
+   3. On swipe, the backend re-validates everything (including EntryFees) and stores this registration on the SERVER (pendingPayments).
+   4. The hosted button opens Razorpay's payment window. The player must enter the same email and phone (shown on screen), because
+      a hosted button cannot carry a registration reference.
+   5. Razorpay's signed webhook (Cloudflare Worker -> Apps Script) matches the captured payment to the registration by exact amount,
+      email and phone. Anything ambiguous is held for manual review by ES Trainers.
+   6. This page only ASKS the server. Success is shown ONLY when the server answers "confirmed". A swipe, an open payment window or
+      coming back to this page is never proof of payment. */
+
+const RZP_BUTTON_SCRIPT = "https://checkout.razorpay.com/v1/payment-button.js"; /* Razorpay's official hosted Payment Button script. Nothing else is ever loaded. */
+const BUTTON_ID_RE = /^pl_[A-Za-z0-9]{10,24}$/;
+const PENDING_ID_RE = /^pp_[0-9a-f]{24}$/;
+const POLL_MS = 5000;
+const POLL_MAX_MS = 20 * 60 * 1000;
 
 /* The backend answers with JSON. text/plain keeps this a "simple" request (no CORS preflight). */
 async function callBackend(body) {
@@ -1282,19 +1302,17 @@ function setPayBusy(busy) {
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const ORDER_ID_RE = /^order_[A-Za-z0-9]{6,40}$/;
-const PAYMENT_ID_RE = /^pay_[A-Za-z0-9]{6,40}$/;
 
-/* The order id of an unfinished payment is remembered so a refresh can ask the server what happened. It is not a secret. */
-const PAY_SESSION_KEY = "es_bgmi_open_order_v1";
-const PAY_SESSION_MAX_AGE_MS = 6 * 60 * 60 * 1000;
-function savePaySession(orderId) {
-  try { localStorage.setItem(PAY_SESSION_KEY, JSON.stringify({ tid: readTournamentId(), orderId, ts: Date.now() })); } catch (e) { /* storage blocked: recovery by email/webhook still works */ }
+/* The id of an unfinished payment session is remembered so a refresh can ask the server what happened. It is not a secret. */
+const PAY_SESSION_KEY = "es_bgmi_open_payment_v1";
+const PAY_SESSION_MAX_AGE_MS = 3 * 60 * 60 * 1000;
+function savePaySession(pendingId) {
+  try { localStorage.setItem(PAY_SESSION_KEY, JSON.stringify({ tid: readTournamentId(), pendingId, ts: Date.now() })); } catch (e) { /* storage blocked: the webhook still completes the registration and emails the leader */ }
 }
 function readPaySession() {
   try {
     const o = JSON.parse(localStorage.getItem(PAY_SESSION_KEY) || "null");
-    if (o && o.tid === readTournamentId() && ORDER_ID_RE.test(String(o.orderId || "")) && Date.now() - Number(o.ts) < PAY_SESSION_MAX_AGE_MS) return o;
+    if (o && o.tid === readTournamentId() && PENDING_ID_RE.test(String(o.pendingId || "")) && Date.now() - Number(o.ts) < PAY_SESSION_MAX_AGE_MS) return o;
   } catch (e) { /* ignore */ }
   return null;
 }
@@ -1302,45 +1320,139 @@ function clearPaySession() {
   try { localStorage.removeItem(PAY_SESSION_KEY); } catch (e) { /* ignore */ }
 }
 
-/* Razorpay's checkout.js is loaded on demand (and pre-loaded once the team is verified). */
-let checkoutLoading = null;
-function loadCheckoutScript() {
-  if (window.Razorpay) return Promise.resolve();
-  if (!checkoutLoading) {
-    checkoutLoading = new Promise((resolve, reject) => {
-      const s = document.createElement("script");
-      s.src = "https://checkout.razorpay.com/v1/checkout.js";
-      s.async = true;
-      s.onload = () => (window.Razorpay ? resolve() : reject(new Error("Razorpay unavailable")));
-      s.onerror = () => { checkoutLoading = null; reject(new Error("Razorpay script failed to load")); };
-      document.head.appendChild(s);
-    });
-  }
-  return checkoutLoading;
-}
-
 function setPbStatus(text, tone) {
   setText(el.pbStatus, text || "");
   el.pbStatus.className = "pbpanel__status" + (tone ? ` is-${tone}` : "");
 }
 
-function showPaymentPanel(feeInr) {
+/* ---- Entry fee -> Payment Button (Firestore EntryFees/<rupees>) ---- */
+
+let feeRun = 0;
+
+function setFee(next) {
+  vs.pay.fee = next;
+  applyFeeGate();
+}
+
+/* The swipe is visible only when the entry fee has been validated AND no payment session is open. */
+function applyFeeGate() {
+  const f = vs.pay.fee;
+  setHidden(el.payBtn, f.status !== "ready" || !!vs.pay.pending || vs.pay.done);
+  setHidden(el.payRetry, f.status !== "error");
+  if (f.status === "loading") setMsg(el.payMsg, "Checking payment options…", "");
+  else if (f.status === "error") setMsg(el.payMsg, f.message, "bad");
+  else if (!vs.pay.busy && !vs.pay.pending) setMsg(el.payMsg, "");
+}
+
+async function prepareEntryFee() {
+  const run = ++feeRun;
+  const t = state.tournament;
+  const feeInr = t && t.feeInr;
+  unmountHostedButton();
+  setFee({ status: "loading", feeInr: feeInr || 0, buttonId: "", message: "" });
+  const fail = (message, cause) => {
+    if (cause) console.error("Entry fee unavailable:", cause);
+    if (run !== feeRun) return;
+    unmountHostedButton();
+    setFee({ status: "error", feeInr: feeInr || 0, buttonId: "", message });
+  };
+  try {
+    if (!Number.isInteger(feeInr) || feeInr < 1) { fail("The entry fee for this tournament is not set. Please contact ES Trainers. You have not been charged.", "no fee"); return; }
+    const unavailable = `Online payment is not available for a ₹${feeInr.toLocaleString("en-IN")} entry fee yet. Please contact ES Trainers. You have not been charged.`;
+    let snap;
+    try { snap = await getDoc(doc(db, "EntryFees", String(feeInr))); }
+    catch (err) { fail("We could not load the payment options. Check your connection and try again. You have not been charged.", err); return; }
+    if (run !== feeRun) return;
+    const d = snap.exists() ? snap.data() : null;
+    if (!d) { fail(unavailable, `EntryFees/${feeInr} does not exist`); return; }
+    if (String(d.status || "").toLowerCase() !== "active") { fail(unavailable, `EntryFees/${feeInr} is not active`); return; }
+    if (Number(d.amount) !== feeInr) { fail(unavailable, `EntryFees/${feeInr} amount does not match the tournament fee`); return; }
+    if (String(d.currency || "").toUpperCase() !== "INR") { fail(unavailable, `EntryFees/${feeInr} currency is not INR`); return; }
+    if (d.mode !== undefined && String(d.mode).toLowerCase() !== "live") { fail(unavailable, `EntryFees/${feeInr} is not marked live`); return; }
+    const buttonId = String(d.buttonId || "").trim();
+    if (!BUTTON_ID_RE.test(buttonId)) { fail(unavailable, `EntryFees/${feeInr} has no valid Payment Button id`); return; }
+    try { await mountHostedButton(buttonId); }
+    catch (err) { fail("The Razorpay payment button could not be loaded. Check your connection and try again. You have not been charged.", err); return; }
+    if (run !== feeRun) return;
+    setFee({ status: "ready", feeInr, buttonId, message: "" });
+  } catch (err) {
+    fail("Could not prepare the payment. Please try again. You have not been charged.", err);
+  }
+}
+
+/* ---- Razorpay hosted Payment Button (documented embed): <form><script src=".../payment-button.js" data-payment_button_id="pl_..."></script></form> ----
+   The form lives in a visually hidden container OUTSIDE the registration form (nested forms are invalid HTML). Only the id changes. */
+function unmountHostedButton() {
+  el.rzpHost.replaceChildren();
+  el.rzpHost.classList.remove("is-visible");
+  el.rzpHost.setAttribute("aria-hidden", "true");
+}
+
+function mountHostedButton(buttonId) {
+  return new Promise((resolve, reject) => {
+    if (!BUTTON_ID_RE.test(buttonId)) { reject(new Error("invalid Payment Button id")); return; }
+    unmountHostedButton();
+    const form = document.createElement("form");
+    const script = document.createElement("script");
+    script.src = RZP_BUTTON_SCRIPT;
+    script.async = true;
+    script.setAttribute("data-payment_button_id", buttonId);
+    const timer = setTimeout(() => reject(new Error("Payment Button script timed out")), 15000);
+    script.onload = () => { clearTimeout(timer); resolve(); };
+    script.onerror = () => { clearTimeout(timer); reject(new Error("Payment Button script failed to load")); };
+    form.appendChild(script);
+    el.rzpHost.appendChild(form);
+  });
+}
+
+function hostedButtonEl() {
+  return el.rzpHost.querySelector("button, input[type='submit'], input[type='button'], [role='button'], a[href]");
+}
+
+/* Clicks the button Razorpay's own script rendered. Razorpay documents no JavaScript method for opening a hosted button, so this is a
+   plain DOM click on its rendered element. If it cannot be found or clicked, the caller shows Razorpay's own button for the player to tap. */
+async function triggerHostedButton() {
+  const until = Date.now() + 4000;
+  let btn = hostedButtonEl();
+  while (!btn && Date.now() < until) { await sleep(200); btn = hostedButtonEl(); }
+  if (!btn) return false;
+  btn.click();
+  return true;
+}
+
+function revealHostedButton() {
+  el.rzpHost.classList.add("is-visible");
+  el.rzpHost.removeAttribute("aria-hidden");
+}
+
+/* ---- Payment panel ---- */
+
+function showPaymentPanel(feeInr, payEmail, payPhone) {
   setText(el.pbFee, `₹${feeInr.toLocaleString("en-IN")}`);
+  setText(el.pbEmail, payEmail || "");
+  setText(el.pbPhone, payPhone ? `+91 ${payPhone}` : "");
+  setHidden(el.pbIds, !payEmail);
   setHidden(el.pbRestart, true);
-  setHidden(el.pbReopen, true);
+  setHidden(el.pbReopen, false);
+  setHidden(el.pbCheck, false);
   setHidden(el.payBtn, true);
   setMsg(el.payMsg, "");
   setHidden(el.pbPanel, false);
-  setPbStatus("Complete your payment in the Razorpay window. This page confirms your registration automatically after the server verifies the payment. Do not pay twice.");
 }
 
 function resetPaymentPanel() {
   setHidden(el.pbPanel, true);
   setHidden(el.pbRestart, true);
   setHidden(el.pbReopen, true);
-  setHidden(el.payBtn, false);
+  setHidden(el.pbCheck, true);
+  setHidden(el.pbIds, true);
   setPbStatus("");
+  el.rzpHost.classList.remove("is-visible");
+  el.rzpHost.setAttribute("aria-hidden", "true");
+  applyFeeGate();
 }
+
+const PAY_WAITING_TEXT = "Complete your payment in the Razorpay window using the email and phone shown above. This page confirms your registration automatically once the server has verified the payment. Do not pay twice.";
 
 async function onPay() {
   if (vs.pay.busy || vs.pay.done || vs.pay.pending) return; /* one open payment session at a time */
@@ -1354,6 +1466,12 @@ async function onPay() {
     showIssues([{ text: "Please verify your team again before paying." }]);
     return;
   }
+  const fee = vs.pay.fee;
+  if (fee.status !== "ready" || !fee.buttonId || fee.feeInr !== (state.tournament && state.tournament.feeInr)) {
+    showIssues([{ text: "The payment options are being refreshed. Please wait a moment and swipe again. You have not been charged." }]);
+    prepareEntryFee();
+    return;
+  }
   vs.pay.failure = "";
   setPayBusy(true);
   setMsg(el.payMsg, "Preparing secure payment…", "");
@@ -1361,34 +1479,39 @@ async function onPay() {
   try {
     const user = auth.currentUser;
     if (!user || normEmail(user.email) !== vs.acct.verifiedEmail) throw new UserFacingError("Your Google sign-in is no longer active. Click Verify Account again.");
-    const feeInr = state.tournament && state.tournament.feeInr;
-    if (!feeInr) throw new UserFacingError("The entry fee for this tournament is not set. Please contact ES Trainers. You have not been charged.");
-    try { await loadCheckoutScript(); } catch (e) { throw new UserFacingError("The Razorpay payment window could not be loaded. Check your connection and try again. You have not been charged."); }
     const idToken = await user.getIdToken(true);
     const registration = registrationSnapshot();
-    /* The server validates everything again and decides the amount. Nothing about the price is sent from here. */
-    const order = await callBackend({ action: "createOrder", tournamentId: readTournamentId(), idToken, registration });
-    if (!order || !order.ok) {
+    /* The server validates everything again, reads EntryFees itself and decides the amount and the Button id. Nothing about the price is trusted from here. */
+    const res = await callBackend({ action: "startPayment", tournamentId: readTournamentId(), idToken, buttonId: fee.buttonId, registration });
+    if (!res || !res.ok) {
       setPayBusy(false);
       setMsg(el.payMsg, "");
-      invalidateTeamVerification();
-      showIssues([{ text: (order && order.error) || "Could not start the payment. Please verify your team again." }]);
+      const feeProblem = res && /^(ENTRY_FEE_|BUTTON_CHANGED)/.test(String(res.code || ""));
+      if (feeProblem) { prepareEntryFee(); } else { invalidateTeamVerification(); }
+      showIssues([{ text: (res && res.error) || "Could not start the payment. Please verify your team again." }]);
       return;
     }
-    /* The order the server created must agree with the fee this page shows. A mismatch means stale data: do not open Checkout. */
-    if (!ORDER_ID_RE.test(String(order.orderId || "")) || order.currency !== "INR" || order.amount !== feeInr * 100 || !/^rzp_(test|live)_[A-Za-z0-9]{6,40}$/.test(String(order.keyId || ""))) {
+    /* The session the server created must agree with the fee and button this page validated. A mismatch means stale data: do not pay. */
+    if (!PENDING_ID_RE.test(String(res.pendingId || "")) || res.currency !== "INR" || res.amountPaise !== fee.feeInr * 100 || res.buttonId !== fee.buttonId) {
       setPayBusy(false);
       throw new UserFacingError("The payment configuration for this tournament does not match. Please refresh the page or contact ES Trainers. You have not been charged.");
     }
     vs.pay.snapshot = registration;
-    vs.pay.order = { orderId: order.orderId, amount: order.amount, keyId: order.keyId };
-    vs.pay.pending = { orderId: order.orderId };
-    vs.pay.paid = null;
-    savePaySession(order.orderId);
+    vs.pay.session = { pendingId: res.pendingId, amountInr: fee.feeInr };
+    vs.pay.pending = { pendingId: res.pendingId };
+    savePaySession(res.pendingId);
     setPayBusy(false);
     applyLock();
-    showPaymentPanel(feeInr);
-    openCheckout();
+    showPaymentPanel(fee.feeInr, res.payEmail, res.payPhone);
+    setPbStatus("Opening the Razorpay payment window…", "idle");
+    startPolling();
+    const opened = await triggerHostedButton();
+    if (opened) {
+      setPbStatus(PAY_WAITING_TEXT);
+    } else {
+      revealHostedButton();
+      setPbStatus("Tap the Razorpay payment button below to pay, using the email and phone shown above. This page confirms your registration automatically once the server has verified the payment. Do not pay twice.");
+    }
   } catch (err) {
     console.error("Could not start payment", err);
     setPayBusy(false);
@@ -1396,199 +1519,168 @@ async function onPay() {
   }
 }
 
-function openCheckout() {
-  const o = vs.pay.order;
-  const reg = vs.pay.snapshot;
-  if (!o || !reg || !window.Razorpay) return;
-  setHidden(el.pbReopen, true);
-  setHidden(el.pbRestart, true);
-  setPbStatus("Complete your payment in the Razorpay window. This page confirms your registration automatically after the server verifies the payment. Do not pay twice.");
-  const leader = reg.players[0] || {};
-  const rzp = new window.Razorpay({
-    key: o.keyId,
-    order_id: o.orderId,
-    amount: o.amount,
-    currency: "INR",
-    name: "ES Trainers",
-    description: `BGMI entry fee · ${reg.teamName}`.slice(0, 120),
-    image: "https://estrainers.in/assets/logo/logo.png",
-    prefill: { name: leader.name || "", email: reg.leaderEmail, contact: reg.leaderPhone || "" }, /* already canonical +91XXXXXXXXXX */
-    theme: { color: "#0a2a8a" },
-    retry: { enabled: true },
-    modal: { confirm_close: true, ondismiss: onCheckoutDismissed },
-    handler: onCheckoutPaid,
-  });
-  rzp.on("payment.failed", (event) => {
-    const reason = event && event.error && event.error.description ? String(event.error.description).slice(0, 160) : "";
-    setPbStatus(`The payment did not go through${reason ? `: ${reason}` : ""}. You have not been charged for a failed payment. You can try again in the payment window.`, "bad");
-  });
-  rzp.open();
+/* The player closed Razorpay's window or wants to pay again. Razorpay documents no event for this, so the choice is manual. */
+async function reopenPaymentWindow() {
+  if (!vs.pay.pending) return;
+  const opened = await triggerHostedButton();
+  if (opened) { setPbStatus(PAY_WAITING_TEXT); return; }
+  revealHostedButton();
+  setPbStatus("Tap the Razorpay payment button below to pay, using the email and phone shown above.");
 }
 
-/* Razorpay returns here when the player paid. This is NOT proof yet: the server decides. */
-function onCheckoutPaid(response) {
-  const r = response || {};
-  vs.pay.paid = { orderId: String(r.razorpay_order_id || ""), paymentId: String(r.razorpay_payment_id || ""), signature: String(r.razorpay_signature || "") };
-  showVerify("pending"); /* synchronously, before any await */
-  setHidden(el.pbReopen, true);
-  setHidden(el.pbRestart, true);
-  setPbStatus("Payment received. Waiting for the server to confirm your registration…");
-  setHidden(el.payBtn, false);
-  applyLock();
-  confirmPaid();
-}
+/* ---- Asking the server what happened (read-only) ---- */
 
-async function confirmPaid() {
-  const p = vs.pay.paid;
-  if (!p) return;
-  showVerify("pending");
-  let res = null;
-  const user = auth.currentUser;
-  if (!user) {
-    showVerify("retry", { message: "Your Google sign-in ended after paying. Your payment was received by Razorpay and the server will complete your registration automatically and email you. Do not pay again. If you do not receive an email in a few minutes, contact ES Trainers with the payment ID below.", paymentId: p.paymentId });
-    return;
-  }
-  try {
-    const idToken = await user.getIdToken();
-    res = await callBackend({
-      action: "confirmPayment", tournamentId: readTournamentId(), idToken, deferEmail: true,
-      razorpay_order_id: p.orderId, razorpay_payment_id: p.paymentId, razorpay_signature: p.signature,
-    });
-  } catch (err) {
-    console.error("Payment confirmation request failed", err);
-  }
-  if (res && res.ok && res.status === "confirmed" && res.registrationId) { finishSuccess(res); return; }
-  if (res && res.final) { onPaymentFailed({ error: res.error, paymentId: p.paymentId }); return; }
-  /* Temporary problem or a lost response: ask the server directly whether it already finished this order. */
-  if (applyOrderStatus(await queryOrderStatus(p.orderId)) === "done") return;
-  showVerify("retry", { message: (res && res.error) || "We could not reach the server to confirm your payment. Your payment is safe. Do not pay again. Tap Retry in a moment.", paymentId: p.paymentId });
-}
-
-/* Asks the server about one order. The server asks Razorpay; the browser is never the source of truth. */
-async function queryOrderStatus(orderId) {
+async function queryPaymentStatus(pendingId) {
   const user = auth.currentUser;
   if (!user) return null;
   try {
     const idToken = await user.getIdToken();
-    return await callBackend({ action: "checkPaymentStatus", tournamentId: readTournamentId(), idToken, orderId });
+    return await callBackend({ action: "paymentStatus", tournamentId: readTournamentId(), idToken, pendingId });
   } catch (err) {
     console.error("Payment status check failed", err);
     return null;
   }
 }
 
-/* Returns "done" (flow ended: success or a final failure), "processing" (paid, server still finishing), "unpaid" or "error". */
-function applyOrderStatus(res) {
+/* Returns "done" (flow ended), "pending" (nothing received yet), "processing" or "error". */
+function applyPaymentState(res) {
   if (!res || !res.ok) return "error";
   if (res.state === "confirmed" && res.registrationId) { finishSuccess(res); return "done"; }
-  if (res.state === "failed") { onPaymentFailed(res); return "done"; }
+  if (res.state === "review") { onPaymentReview(res); return "done"; }
+  if (res.state === "closed") { onPaymentClosed(res); return "done"; }
+  if (res.state === "expired" || res.state === "superseded" || res.state === "unknown") { onSessionEnded(res); return "done"; }
   if (res.state === "processing") return "processing";
-  return "unpaid"; /* pending / unknown: no payment found for this order */
+  return "pending";
 }
 
-async function awaitOrderResult(orderId, attempts = 20) {
-  for (let i = 0; i < attempts; i++) {
-    await sleep(3000);
-    const r = applyOrderStatus(await queryOrderStatus(orderId));
-    if (r === "done" || r === "unpaid") return r;
-  }
-  return "processing";
-}
-
-/* The Checkout window was closed. The payment may still have succeeded (closed during UPI approval, callback lost): check. */
-async function onCheckoutDismissed() {
-  if (vs.pay.paid || vs.pay.done) return; /* the success callback is already handling it */
-  const o = vs.pay.order;
-  if (!o || !vs.pay.pending) return;
-  setPbStatus("Checking whether a payment was received…", "idle");
-  let result = applyOrderStatus(await queryOrderStatus(o.orderId));
-  if (result === "processing") {
-    showVerify("pending");
-    result = await awaitOrderResult(o.orderId);
-    if (result === "processing") {
-      showVerify("retry", { message: "Your payment was received and the server is still finishing your registration. Do not pay again. Your confirmation will be emailed automatically." });
+let pollRun = 0;
+async function startPolling() {
+  const run = ++pollRun;
+  const started = Date.now();
+  while (run === pollRun && vs.pay.pending && !vs.pay.done) {
+    await sleep(POLL_MS);
+    if (run !== pollRun || !vs.pay.pending || vs.pay.done) return;
+    const r = applyPaymentState(await queryPaymentStatus(vs.pay.pending.pendingId));
+    if (r === "done") return;
+    if (Date.now() - started > POLL_MAX_MS) {
+      setPbStatus("We have not received your payment yet. If you paid, do not pay again: it is confirmed automatically, or ES Trainers will check it and email you. Use “I have paid — check status” to look again.", "idle");
+      setHidden(el.pbRestart, false);
       return;
     }
   }
-  if (result === "done") return;
-  setPbStatus(result === "error"
-    ? "The payment window was closed. We could not check your payment just now. If you completed a payment, your confirmation email will arrive automatically; do not pay again."
-    : "The payment window was closed and no payment was received. You have not been charged. You can open it again or start a new session.", "idle");
-  setHidden(el.pbReopen, false);
-  setHidden(el.pbRestart, false);
+}
+
+async function onCheckStatus() {
+  if (!vs.pay.pending) return;
+  setPbStatus("Checking with the server…", "idle");
+  const r = applyPaymentState(await queryPaymentStatus(vs.pay.pending.pendingId));
+  if (r === "done") return;
+  setPbStatus(r === "error"
+    ? "We could not check just now. If you paid, do not pay again. Try again in a moment."
+    : r === "processing"
+      ? "Your payment was received and the server is finishing your registration. Do not pay again."
+      : "No payment has been received yet. If you just paid, wait a few seconds and check again. Do not pay twice.", "idle");
 }
 
 function onVerifyRetry() {
-  if (vs.pay.paid) { confirmPaid(); return; }
-  const orderId = (vs.pay.order && vs.pay.order.orderId) || (readPaySession() || {}).orderId;
-  if (!orderId) { hideVerify(); return; }
+  const id = (vs.pay.pending && vs.pay.pending.pendingId) || (readPaySession() || {}).pendingId;
+  if (!id) { hideVerify(); return; }
   showVerify("pending");
-  queryOrderStatus(orderId).then((res) => {
-    const r = applyOrderStatus(res);
+  queryPaymentStatus(id).then((res) => {
+    const r = applyPaymentState(res);
     if (r === "done") return;
-    showVerify("retry", { message: r === "processing" ? "Your payment was received and the server is still finishing your registration. Do not pay again." : "We could not confirm a payment yet. If you paid, do not pay again; your confirmation will be emailed." });
+    showVerify("retry", { message: r === "pending"
+      ? "Your payment has not been received yet. If you paid, do not pay again: your registration is confirmed automatically and a confirmation email is sent."
+      : "We could not check just now. If you paid, do not pay again; your confirmation will be emailed automatically." });
   });
 }
 
-function finishSuccess(res) {
+function endPaymentSession() {
+  pollRun++;
   clearPaySession();
+  vs.pay.pending = null;
+  vs.pay.session = null;
+  vs.pay.snapshot = null;
+}
+
+function finishSuccess(res) {
+  endPaymentSession();
   hideVerify();
   setPbStatus("");
   setHidden(el.pbPanel, true);
-  vs.pay.paid = null;
-  vs.pay.order = null;
   if (res.emailStatus !== "sent") requestConfirmationEmail(res); /* the server usually has sent it already; this is an idempotent safety net */
   showSuccess(res);
 }
 
-function onPaymentFailed(res) {
-  clearPaySession();
-  vs.pay.pending = null;
-  vs.pay.paid = null;
-  vs.pay.order = null;
+/* The payment arrived but could not be matched or registered automatically. It is safe: ES Trainers reviews it and emails the leader. */
+function onPaymentReview(res) {
+  endPaymentSession();
+  resetPaymentPanel();
+  applyLock();
+  showVerify("info", {
+    title: "Your payment is being checked",
+    message: "We received your payment, but it needs a quick manual check before your registration can be confirmed. Do not pay again. ES Trainers will confirm by email, usually within a few hours. If you do not hear back, contact ES Trainers on WhatsApp with the payment ID below.",
+    paymentId: res.paymentId || "",
+  });
+}
+
+function onPaymentClosed(res) {
+  endPaymentSession();
   resetPaymentPanel();
   invalidateTeamVerification();
   applyLock();
-  showIssues([{ text: res.error || "The registration could not be completed." }]);
-  showVerify("final", { message: res.error || "The registration could not be completed.", paymentId: res.paymentId || "" });
+  showVerify("info", {
+    title: "Payment reviewed by ES Trainers",
+    message: "ES Trainers has already handled this payment manually (for example, refunded it). Please check your email. You can verify your team again and register if the tournament is still open.",
+    paymentId: res.paymentId || "",
+  });
+}
+
+function onSessionEnded(res) {
+  endPaymentSession();
+  resetPaymentPanel();
+  invalidateTeamVerification();
+  applyLock();
+  showVerify("info", {
+    title: "Payment session ended",
+    message: res.state === "expired"
+      ? "This payment session expired and no payment was received. You have not been charged. Fill in and verify the form again to register. If you did pay, do not pay again; ES Trainers will check it and email you."
+      : "This payment session is no longer active. If you paid, do not pay again; ES Trainers will check it and email you. Otherwise verify the form again to register.",
+  });
 }
 
 function restartPaymentSession() {
-  clearPaySession();
-  vs.pay.pending = null;
-  vs.pay.snapshot = null;
-  vs.pay.order = null;
-  vs.pay.paid = null;
+  endPaymentSession();
   resetPaymentPanel();
   setMsg(el.payMsg, "");
-  applyLock(); /* the server re-validates everything when the new session is created */
-  renderPayButton();
+  applyLock(); /* the server re-validates everything and supersedes the old session when the new one is created */
+  prepareEntryFee();
 }
 
-/* After a page refresh / reopened tab: if an order was open, ask the server what became of it. */
+/* After a page refresh / reopened tab: if a payment session was open, ask the server what became of it. */
 async function resumePendingPayment() {
   const s = readPaySession();
   if (!s) return;
   try { if (auth.authStateReady) await auth.authStateReady(); } catch (e) { /* ignore */ }
   if (!auth.currentUser) {
     clearPaySession();
-    showVerify("info", { message: "You refreshed the page while a payment may have been open, and your Google sign-in has ended, so this page cannot check it. If you paid, your registration is completed automatically and a confirmation email is sent. If you do not receive it in a few minutes, contact ES Trainers. Do not pay again." });
+    showVerify("info", { message: "You refreshed the page while a payment may have been open, and your Google sign-in has ended, so this page cannot check it. If you paid, your registration is completed automatically and a confirmation email is sent. If you do not receive it in a few minutes, contact ES Trainers with your payment details." });
     return;
   }
-  vs.pay.pending = { orderId: s.orderId, resumed: true };
+  vs.pay.pending = { pendingId: s.pendingId, resumed: true };
   applyLock();
   showVerify("pending");
-  let result = applyOrderStatus(await queryOrderStatus(s.orderId));
-  if (result === "processing") result = await awaitOrderResult(s.orderId);
-  if (result === "done") return;
+  let result = "pending";
+  for (let i = 0; i < 12; i++) {
+    result = applyPaymentState(await queryPaymentStatus(s.pendingId));
+    if (result === "done") return;
+    await sleep(3000);
+  }
   vs.pay.pending = null;
   applyLock();
-  if (result === "unpaid") {
-    clearPaySession();
-    showVerify("info", { message: "We checked your last payment attempt and no payment was received. You have not been charged. Fill in and verify the form again to register." });
-  } else {
-    showVerify("retry", { message: result === "processing" ? "Your payment was received and the server is still finishing your registration. Do not pay again. Your confirmation will be emailed automatically." : "We could not check your last payment just now. If you paid, do not pay again; your confirmation will be emailed automatically." });
-  }
+  showVerify("retry", { message: result === "pending"
+    ? "We have not received a payment for your last attempt yet. If you paid just now, do not pay again: your registration is confirmed automatically and a confirmation email is sent. Otherwise, fill in and verify the form again to register."
+    : "We could not check your last payment just now. If you paid, do not pay again; your confirmation will be emailed automatically." });
 }
 
 /* ---- Payment verification panel ----
@@ -1597,7 +1689,7 @@ async function resumePendingPayment() {
    the payment AND the registration has been saved. */
 const vfy = { open: false, inerted: [], lastFocus: null };
 
-function showVerify(mode, { message, paymentId } = {}) {
+function showVerify(mode, { message, paymentId, title } = {}) {
   const texts = {
     pending: ["Verifying your payment", "Your payment is being verified securely. Please do not refresh or close this page."],
     retry: ["We are still confirming your payment", message || "The server has not confirmed your payment yet."],
@@ -1605,7 +1697,7 @@ function showVerify(mode, { message, paymentId } = {}) {
     info: ["No payment was received", message || "No payment was found for your last attempt."]
   };
   el.vfyCard.setAttribute("data-mode", mode);
-  setText(el.vfyTitle, texts[mode][0]);
+  setText(el.vfyTitle, title || texts[mode][0]);
   setText(el.vfyMsg, texts[mode][1]);
   setText(el.vfyPay, paymentId || "");
   setHidden(el.vfyId, !paymentId);
@@ -1830,7 +1922,7 @@ function resetRegistrationForm() {
   vs.name = { checked: null, available: null };
   vs.acct = { verifiedEmail: null, registered: null, busy: false };
   vs.team = { fingerprint: null, verified: false, busy: false };
-  vs.pay = { busy: false, pending: null, snapshot: null, order: null, paid: null, done: false, failure: "" };
+  vs.pay = { busy: false, pending: null, snapshot: null, session: null, done: false, failure: "", fee: { status: "idle", feeInr: 0, buttonId: "", message: "" } };
   attempted = false;
   state.rulesAccepted = false;
 

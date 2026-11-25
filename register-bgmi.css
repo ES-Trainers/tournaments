@@ -638,6 +638,17 @@ body:has(dialog[open]) { overflow: hidden; }
 @keyframes pbpulse { 0%, 100% { opacity: .25; } 50% { opacity: .9; } }
 @media (prefers-reduced-motion: reduce) { .pbpanel__status::before { animation: none; } }
 
+/* The swipe sets display in its own rule, so the hidden attribute alone did not hide it. It must stay hidden until the entry fee is validated. */
+.swipe[hidden] { display: none; }
+
+/* ---- Razorpay hosted Payment Button host: off-screen (not display:none, so Razorpay's script can lay out and be clicked) until needed ---- */
+.rzp-host { position: absolute; left: -9999px; top: 0; width: 1px; height: 1px; overflow: hidden; }
+.rzp-host.is-visible { position: static; width: auto; height: auto; overflow: visible; margin-top: 14px; padding: 14px; border: 1px dashed var(--line, #d8dee9); border-radius: 12px; background: var(--surface, #f6f8fc); }
+.rzp-host form { margin: 0; }
+.pbpanel__ids { display: grid; gap: 6px; }
+.pbpanel__idtitle { margin: 0; font-size: 14px; font-weight: 600; color: var(--ink, #101828); }
+#pay-retry { justify-self: start; margin-top: 8px; }
+
 /* ---- Fixed +91 phone field: the prefix is part of the page, not of the input ---- */
 .phone { display: flex; align-items: stretch; width: 100%; background: var(--white); border: 1px solid #c9d3e6; border-radius: var(--radius-sm); transition: border-color var(--transition), box-shadow var(--transition); }
 .phone:hover { border-color: #aebad2; }

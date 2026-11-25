@@ -183,19 +183,33 @@
                 <span class="swipe__amt" id="pay-amt" hidden></span>
               </div>
               <p class="vmsg" id="pay-msg" role="status" aria-live="polite"></p>
-              <!-- Shown after the server has created the Razorpay order. Razorpay Checkout opens as a window on top of the page;
-                   this panel only shows the fee and what is happening. The amount comes from the server, never from the browser. -->
+              <button type="button" class="btn btn--ghost" id="pay-retry" hidden>Try again</button>
+              <!-- Shown after the server has created the payment session. Razorpay's hosted Payment Button opens its own payment window on top of
+                   the page; this panel shows the fee, the email and phone the payer must enter, and what is happening. The fee and the button
+                   come from Firestore (EntryFees) and are re-checked by the server, never trusted from the browser. -->
               <div class="pbpanel" id="pb-panel" hidden>
                 <p class="pbpanel__fee">Entry fee: <strong id="pb-fee"></strong> <span>(fixed for this tournament; it cannot be changed)</span></p>
+                <div class="pbpanel__ids" id="pb-ids" hidden>
+                  <p class="pbpanel__idtitle">In the Razorpay window, enter exactly these details so we can match your payment to your team:</p>
+                  <ul class="pbpanel__steps">
+                    <li>Email: <code id="pb-email"></code></li>
+                    <li>Phone: <code id="pb-phone"></code></li>
+                  </ul>
+                </div>
                 <p class="pbpanel__status" id="pb-status" role="status" aria-live="polite"></p>
                 <div class="pbpanel__actions">
-                  <button type="button" class="btn btn--bgmi" id="pb-reopen" hidden>Open the payment window again</button>
+                  <button type="button" class="btn btn--bgmi" id="pb-check" hidden>I have paid — check status</button>
+                  <button type="button" class="btn btn--ghost" id="pb-reopen" hidden>Open the payment window again</button>
                   <button type="button" class="btn btn--ghost" id="pb-restart" hidden>Start a new payment session</button>
                 </div>
               </div>
             </div>
           </div>
         </form>
+        <!-- Razorpay hosted Payment Button host. Outside the registration form on purpose (nested forms are invalid). Visually hidden until
+             Firestore validation passes; shown only if the hidden button cannot be triggered. register-bgmi.js fills it with Razorpay's
+             documented embed: <form><script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_..."></script></form> -->
+        <div class="rzp-host" id="rzp-host" aria-hidden="true"></div>
       </div>
 
     </div>
@@ -204,7 +218,7 @@
 
 </main>
 
-<!-- Payment verification panel: opens the moment Razorpay returns, stays until the SERVER answers.
+<!-- Payment verification panel: opens when a refreshed page is checking an earlier payment, and for review / ended sessions. It is only ever told what the SERVER answered.
      It is NOT a success screen; success only appears after the backend confirms and saves the registration. -->
 <div class="vfy" id="verify-overlay" role="alertdialog" aria-modal="true" aria-labelledby="vfy-title" aria-describedby="vfy-msg" hidden>
   <div class="vfy__card" data-mode="pending">
